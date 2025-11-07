@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陈春晖 分管项目 - 项目进度跟踪系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; color: #333; line-height: 1.6; padding: 10px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 15px; }
+        .stats { display: flex; gap: 15px; }
+        .stat-card { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
+        .stat-card.started { background: rgba(76, 175, 80, 0.3); }
+        .stat-card.nashuitong { background: rgba(255, 152, 0, 0.3); }
+        .stat-number { display: block; font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.9; }
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; outline: none; }
+        .search-box input:focus { border-color: #667eea; }
+        .project-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-left: 4px solid #667eea; width: 100%; }
+        .project-card.started { border-left-color: #4CAF50; }
+        .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .project-name { flex: 1; font-size: 1.1rem; color: #2c3e50; margin-right: 10px; }
+        .status-badges { display: flex; gap: 5px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+        .status-badge.started { background: #4CAF50; color: white; }
+        .status-badge.not-started { background: #ff9800; color: white; }
+        .status-badge.nashuitong { background: #2196F3; color: white; }
+        .detail-item { margin-bottom: 8px; display: flex; }
+        .detail-item strong { color: #666; min-width: 80px; }
+        .leader { color: #e74c3c; font-weight: bold; }
+        .unit { color: #3498db; font-weight: bold; }
+        .progress-text { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 5px; border-left: 3px solid #667eea; }
+        .project-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .meta-item { font-size: 0.8rem; color: #666; background: #f8f9fa; padding: 3px 6px; border-radius: 4px; }
+        .last-updated { text-align: center; color: #666; font-size: 0.8rem; margin-top: 10px; }
+        .nav-links { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .nav-link { background: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; color: #333; font-size: 0.9rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .nav-link:hover { background: #667eea; color: white; }
+        @media (max-width: 768px) {
+            .stats { flex-direction: column; gap: 10px; }
+            .project-header { flex-direction: column; align-items: flex-start; }
+            .status-badges { margin-top: 8px; }
+            .detail-item { flex-direction: column; }
+            .detail-item strong { min-width: auto; margin-bottom: 2px; }
+            .nav-links { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部统计信息 -->
+        <div class="header">
+            <h1>📊 项目进度跟踪</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number">26</span>
+                    <span class="stat-label">总项目数</span>
+                </div>
+                <div class="stat-card started">
+                    <span class="stat-number">7</span>
+                    <span class="stat-label">已开工</span>
+                </div>
+                <div class="stat-card nashuitong">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">已纳统</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 所有项目</a>
+            <a href="started.html" class="nav-link">✅ 已开工</a>
+            <a href="not-started.html" class="nav-link">⏳ 未开工</a>
+            <a href="search.html" class="nav-link">🔍 搜索项目</a>
+        </div>
+
+        <!-- 页面标题 -->
+        <h2 style="margin-bottom: 15px;">陈春晖 分管项目</h2>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索项目名称、分管领导、责任单位..." 
+                   onkeyup="filterProjects()">
+        </div>
+
+        <!-- 项目列表 -->
+        <div class="projects-list" id="projectsList">
+            
+            <div class="project-card started" 
+                 data-name="甘露山文旅城沿河路" 
+                 data-leader="陈春晖" 
+                 data-unit="前川街" 
+                 data-progress="2024年10月16批复初设，2025年2月10日中标（武汉建工集团股份有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">甘露山文旅城沿河路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年10月16批复初设，2025年2月10日中标（武汉建工集团股份有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 15000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="环祁路与祁川连接线工程" 
+                 data-leader="陈春晖" 
+                 data-unit="祁家湾街" 
+                 data-progress="2024年1月22日批复初设，2024年9月19日中标（湖北铁甲建设集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">环祁路与祁川连接线工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月22日批复初设，2024年9月19日中标（湖北铁甲建设集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="钟声街市政基础设施配套" 
+                 data-leader="陈春晖" 
+                 data-unit="姚家集街" 
+                 data-progress="4月23日批复初设，9月30日中标（武汉通达兴旺建筑工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">钟声街市政基础设施配套</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">姚家集街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月23日批复初设，9月30日中标（武汉通达兴旺建筑工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="李家集街泥人王村地质灾害治理" 
+                 data-leader="陈春晖" 
+                 data-unit="区自建局" 
+                 data-progress="2024年9月11日批复初设，1月9日中标（武汉建荣岩土工程有限公司，武汉九环公路工程有限公司，中南勘察基础工程有限公司），未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">李家集街泥人王村地质灾害治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区自建局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年9月11日批复初设，1月9日中标（武汉建荣岩土工程有限公司，武汉九环公路工程有限公司，中南勘察基础工程有限公司），未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 469万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="蔡店街、长轩岭街地质灾害治理" 
+                 data-leader="陈春晖" 
+                 data-unit="区自建局" 
+                 data-progress="2024年2月28日批复初设，1月9日中标（武汉建荣岩土工程有限公司，武汉九环公路工程有限公司，中南勘察基础工程有限公司），未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">蔡店街、长轩岭街地质灾害治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区自建局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年2月28日批复初设，1月9日中标（武汉建荣岩土工程有限公司，武汉九环公路工程有限公司，中南勘察基础工程有限公司），未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="百锦街公用人防工程" 
+                 data-leader="陈春晖" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="8月29日批复可研，盘龙交投正在修编初设。">
+                <div class="project-header">
+                    <h3 class="project-name">百锦街公用人防工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月29日批复可研，盘龙交投正在修编初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 27000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="甘露山文旅城滠水东堤加固工程" 
+                 data-leader="陈春晖" 
+                 data-unit="前川街" 
+                 data-progress="2021年7月2日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">甘露山文旅城滠水东堤加固工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2021年7月2日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 17300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="王蔡公路与武麻铁路、沪蓉铁路立交工程" 
+                 data-leader="陈春晖" 
+                 data-unit="区交通运输局" 
+                 data-progress="项目可研、初设已批复，工程预付款（预计30%，3600万元）未到位，工程代建协议无法签订。">
+                <div class="project-header">
+                    <h3 class="project-name">王蔡公路与武麻铁路、沪蓉铁路立交工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">项目可研、初设已批复，工程预付款（预计30%，3600万元）未到位，工程代建协议无法签订。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 12530万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="纵一路北延线" 
+                 data-leader="陈春晖" 
+                 data-unit="前川街" 
+                 data-progress="9月30日批复可研，正在修编初设。">
+                <div class="project-header">
+                    <h3 class="project-name">纵一路北延线</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复可研，正在修编初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 12000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="滨湖路延长线与沪蓉铁路、京广高速铁路交叉工程" 
+                 data-leader="陈春晖" 
+                 data-unit="区交通运输局" 
+                 data-progress="项目可研、初设已批复，工程预付款（预计30%，1200万元）未到位，工程代建协议无法签订。">
+                <div class="project-header">
+                    <h3 class="project-name">滨湖路延长线与沪蓉铁路、京广高速铁路交叉工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">项目可研、初设已批复，工程预付款（预计30%，1200万元）未到位，工程代建协议无法签订。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 10000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="G316与沪蓉铁路交叉工程" 
+                 data-leader="陈春晖" 
+                 data-unit="区交通运输局" 
+                 data-progress="项目可研、初设已批复，工程预付款（预计30%，1200万元）未到位，工程代建协议无法签订。">
+                <div class="project-header">
+                    <h3 class="project-name">G316与沪蓉铁路交叉工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">项目可研、初设已批复，工程预付款（预计30%，1200万元）未到位，工程代建协议无法签订。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3900万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="2025年度村（社区）党员群众服务中心新建项目" 
+                 data-leader="陈春晖" 
+                 data-unit="区委组织部" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">2025年度村（社区）党员群众服务中心新建项目</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区委组织部</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="防灾减灾救灾和应急管理综合训练基地" 
+                 data-leader="陈春晖" 
+                 data-unit="区应急管理局" 
+                 data-progress="9月3日批复可研，10月23日召开初设评审会，正在修编初设。">
+                <div class="project-header">
+                    <h3 class="project-name">防灾减灾救灾和应急管理综合训练基地</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区应急管理局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月3日批复可研，10月23日召开初设评审会，正在修编初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="熊许公路沿线进出口节点安全整治及提升工程" 
+                 data-leader="陈春晖" 
+                 data-unit="蔡榨街" 
+                 data-progress="9月22日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">熊许公路沿线进出口节点安全整治及提升工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">蔡榨街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月22日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="前陈公路与沪蓉铁路交叉工程" 
+                 data-leader="陈春晖" 
+                 data-unit="区交通运输局" 
+                 data-progress="项目可研、初设已批复，工程预付款（预计30%，500万元）未到位，工程代建协议无法签订。">
+                <div class="project-header">
+                    <h3 class="project-name">前陈公路与沪蓉铁路交叉工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">项目可研、初设已批复，工程预付款（预计30%，500万元）未到位，工程代建协议无法签订。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="兴学路提档升级及集镇环境提升" 
+                 data-leader="陈春晖" 
+                 data-unit="蔡店街" 
+                 data-progress="10月20日批复初设">
+                <div class="project-header">
+                    <h3 class="project-name">兴学路提档升级及集镇环境提升</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">蔡店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月20日批复初设</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="黄孝公路段（方安集村）综合整治二期" 
+                 data-leader="陈春晖" 
+                 data-unit="李家集街" 
+                 data-progress="2024年10月29日批复可研，上级资金未落实，未批复初设">
+                <div class="project-header">
+                    <h3 class="project-name">黄孝公路段（方安集村）综合整治二期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">李家集街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年10月29日批复可研，上级资金未落实，未批复初设</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="泡桐社区基础设施建设" 
+                 data-leader="陈春晖" 
+                 data-unit="李家集街" 
+                 data-progress="10月14日批复初设，正在准备财评资料。">
+                <div class="project-header">
+                    <h3 class="project-name">泡桐社区基础设施建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">李家集街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月14日批复初设，正在准备财评资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1320万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="李集社区路网工程" 
+                 data-leader="陈春晖" 
+                 data-unit="李家集街" 
+                 data-progress="9月30日批复初设，正在准备财评资料。">
+                <div class="project-header">
+                    <h3 class="project-name">李集社区路网工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">李家集街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复初设，正在准备财评资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="王家河集镇环境综合整治二期" 
+                 data-leader="陈春晖" 
+                 data-unit="王家河街" 
+                 data-progress="10月31日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">王家河集镇环境综合整治二期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">王家河街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月31日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="姚集大道、百业街二期配套工程" 
+                 data-leader="陈春晖" 
+                 data-unit="姚家集街" 
+                 data-progress="初设正在编制">
+                <div class="project-header">
+                    <h3 class="project-name">姚集大道、百业街二期配套工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">姚家集街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">初设正在编制</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1100万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="朝前片区基础设施改造" 
+                 data-leader="陈春晖" 
+                 data-unit="祁家湾街" 
+                 data-progress="10月24日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">朝前片区基础设施改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月24日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河街老镇区环境整治" 
+                 data-leader="陈春晖" 
+                 data-unit="天河街" 
+                 data-progress="9月22日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">天河街老镇区环境整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">天河街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月22日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="茶韵公园“双百”示范片区提升" 
+                 data-leader="陈春晖" 
+                 data-unit="蔡榨街" 
+                 data-progress="2024年7月30日批复初设（代可研）。">
+                <div class="project-header">
+                    <h3 class="project-name">茶韵公园“双百”示范片区提升</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">蔡榨街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年7月30日批复初设（代可研）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 900万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="国有储备粮库氮气储粮建设" 
+                 data-leader="陈春晖" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="10月31日挂网招标，12月24日前报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">国有储备粮库氮气储粮建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月31日挂网招标，12月24日前报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="区税务局百秀办公区维修改造" 
+                 data-leader="陈春晖" 
+                 data-unit="区税务局" 
+                 data-progress="9月26日批复初设，正在财评">
+                <div class="project-header">
+                    <h3 class="project-name">区税务局百秀办公区维修改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区税务局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月26日批复初设，正在财评</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+
+        <div class="last-updated">
+            最后更新: 2025-11-07 11:23:11
+        </div>
+    </div>
+
+    <script>
+        // 搜索功能
+        function filterProjects() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const projects = document.getElementsByClassName('project-card');
+
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                const name = project.getAttribute('data-name').toLowerCase();
+                const leader = project.getAttribute('data-leader').toLowerCase();
+                const unit = project.getAttribute('data-unit').toLowerCase();
+                const progress = project.getAttribute('data-progress').toLowerCase();
+
+                if (name.includes(filter) || leader.includes(filter) || 
+                    unit.includes(filter) || progress.includes(filter)) {
+                    project.style.display = '';
+                } else {
+                    project.style.display = 'none';
+                }
+            }
+        }
+
+        
+    </script>
+</body>
+</html>

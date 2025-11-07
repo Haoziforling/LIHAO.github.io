@@ -1,0 +1,4613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>已开工项目 - 项目进度跟踪系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; color: #333; line-height: 1.6; padding: 10px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 15px; }
+        .stats { display: flex; gap: 15px; }
+        .stat-card { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
+        .stat-card.started { background: rgba(76, 175, 80, 0.3); }
+        .stat-card.nashuitong { background: rgba(255, 152, 0, 0.3); }
+        .stat-number { display: block; font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.9; }
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; outline: none; }
+        .search-box input:focus { border-color: #667eea; }
+        .project-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-left: 4px solid #667eea; width: 100%; }
+        .project-card.started { border-left-color: #4CAF50; }
+        .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .project-name { flex: 1; font-size: 1.1rem; color: #2c3e50; margin-right: 10px; }
+        .status-badges { display: flex; gap: 5px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+        .status-badge.started { background: #4CAF50; color: white; }
+        .status-badge.not-started { background: #ff9800; color: white; }
+        .status-badge.nashuitong { background: #2196F3; color: white; }
+        .detail-item { margin-bottom: 8px; display: flex; }
+        .detail-item strong { color: #666; min-width: 80px; }
+        .leader { color: #e74c3c; font-weight: bold; }
+        .unit { color: #3498db; font-weight: bold; }
+        .progress-text { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 5px; border-left: 3px solid #667eea; }
+        .project-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .meta-item { font-size: 0.8rem; color: #666; background: #f8f9fa; padding: 3px 6px; border-radius: 4px; }
+        .last-updated { text-align: center; color: #666; font-size: 0.8rem; margin-top: 10px; }
+        .nav-links { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .nav-link { background: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; color: #333; font-size: 0.9rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .nav-link:hover { background: #667eea; color: white; }
+        @media (max-width: 768px) {
+            .stats { flex-direction: column; gap: 10px; }
+            .project-header { flex-direction: column; align-items: flex-start; }
+            .status-badges { margin-top: 8px; }
+            .detail-item { flex-direction: column; }
+            .detail-item strong { min-width: auto; margin-bottom: 2px; }
+            .nav-links { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部统计信息 -->
+        <div class="header">
+            <h1>📊 项目进度跟踪</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number">102</span>
+                    <span class="stat-label">总项目数</span>
+                </div>
+                <div class="stat-card started">
+                    <span class="stat-number">102</span>
+                    <span class="stat-label">已开工</span>
+                </div>
+                <div class="stat-card nashuitong">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">已纳统</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 所有项目</a>
+            <a href="started.html" class="nav-link">✅ 已开工</a>
+            <a href="not-started.html" class="nav-link">⏳ 未开工</a>
+            <a href="search.html" class="nav-link">🔍 搜索项目</a>
+        </div>
+
+        <!-- 页面标题 -->
+        <h2 style="margin-bottom: 15px;">已开工项目</h2>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索项目名称、分管领导、责任单位..." 
+                   onkeyup="filterProjects()">
+        </div>
+
+        <!-- 项目列表 -->
+        <div class="projects-list" id="projectsList">
+            
+            <div class="project-card started" 
+                 data-name="陈榨湾安置型商品房P（2024）083、098号地块" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="备案项目（中建二局）。">
+                <div class="project-header">
+                    <h3 class="project-name">陈榨湾安置型商品房P（2024）083、098号地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">备案项目（中建二局）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 160000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="木兰农创中心" 
+                 data-leader="阮诗军" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2024年4月2日已中标（武汉建工基础设施工程有限公司 , 武汉市政工程设计研究院有限责任公司 , 中信建筑设计研究总院有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰农创中心</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">阮诗军</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年4月2日已中标（武汉建工基础设施工程有限公司 , 武汉市政工程设计研究院有限责任公司 , 中信建筑设计研究总院有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 150000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="S115孝昌京珠李集互通至黄陂区改扩建" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="7月21日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">S115孝昌京珠李集互通至黄陂区改扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月21日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 105700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="红焰一期 P（2023）077号地块" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="2024年12月开工（誉城九方）。">
+                <div class="project-header">
+                    <h3 class="project-name">红焰一期 P（2023）077号地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月开工（誉城九方）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 96500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="临空大道与机场二通道互通工程（二期）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年2月4日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">临空大道与机场二通道互通工程（二期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年2月4日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 93200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="航城西路跨府河通道黄陂段" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年7月26日中标（武汉市政环境工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">航城西路跨府河通道黄陂段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年7月26日中标（武汉市政环境工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 91000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="红焰一期P（2023）100号地块" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="备案项目（誉城九方）">
+                <div class="project-header">
+                    <h3 class="project-name">红焰一期P（2023）100号地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">备案项目（誉城九方）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 84700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="川龙大道京九街至京广铁路跨线桥改造" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2021年3月3日中标（新八建设集团有限公司/广东省冶金建筑设计研究院有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">川龙大道京九街至京广铁路跨线桥改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2021年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2021年3月3日中标（新八建设集团有限公司/广东省冶金建筑设计研究院有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 83100万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="投卓· 桃花安置房" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="2024年5月开工（中铁十四局）。">
+                <div class="project-header">
+                    <h3 class="project-name">投卓· 桃花安置房</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年5月开工（中铁十四局）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 69000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="西郊花园还建小区-A区" 
+                 data-leader="陈聪" 
+                 data-unit="横店街" 
+                 data-progress="2022年3月12日批复初设，2022年3月29日中标（武汉市政环境工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">西郊花园还建小区-A区</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年3月12日批复初设，2022年3月29日中标（武汉市政环境工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 64400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="梅院泥水库灌区现代化建设" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2024年6月28日中标（黄河养护集团有限公司），国债项目，已入库。">
+                <div class="project-header">
+                    <h3 class="project-name">梅院泥水库灌区现代化建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年6月28日中标（黄河养护集团有限公司），国债项目，已入库。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 60700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="临空大道与机场二通道互通工程（一期）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年7月26日中标（武汉市盘龙明达建筑有限公司 , 武汉市政工程设计研究院有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">临空大道与机场二通道互通工程（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年7月26日中标（武汉市盘龙明达建筑有限公司 , 武汉市政工程设计研究院有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 57400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="西郊花园还建小区-B区" 
+                 data-leader="陈聪" 
+                 data-unit="横店街" 
+                 data-progress="2023年5月16日批复初设，2023年7月1日中标（武汉市政环境工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">西郊花园还建小区-B区</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年5月16日批复初设，2023年7月1日中标（武汉市政环境工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 51400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="投卓· 桃花安置房（北区）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="2024年1月4日中标（中铁十四局集团武汉玖通工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">投卓· 桃花安置房（北区）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月4日中标（中铁十四局集团武汉玖通工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 48000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="人民医院老院区改造" 
+                 data-leader="姜明" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="托育2157万元，2025年5月9日中标（湖北乐宇建设工程有限公司）；妇幼5197万元，市民之家（政务中心）8687万元，公共资源中心及室外工程6000万元，信息化2000万元，停车楼8800万元，外科楼预计1.5亿元。">
+                <div class="project-header">
+                    <h3 class="project-name">人民医院老院区改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">姜明</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">托育2157万元，2025年5月9日中标（湖北乐宇建设工程有限公司）；妇幼5197万元，市民之家（政务中心）8687万元，公共资源中心及室外工程6000万元，信息化2000万元，停车楼8800万元，外科楼预计1.5亿元。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 48000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 信息化项目是政府投资项目，其余均为备案项目。信息化项目10月14日召开可研评审会</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区A地块" 
+                 data-leader="陈聪" 
+                 data-unit="天河街" 
+                 data-progress="2023年9月18日批复初设，1月22日中标（武汉华艺建筑工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区A地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">天河街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年9月18日批复初设，1月22日中标（武汉华艺建筑工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 46500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="三街安居还建小区四期（地块一）" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2023年4月20日批复初设，2022年12月26日中标（武汉市第三建工集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">三街安居还建小区四期（地块一）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月20日批复初设，2022年12月26日中标（武汉市第三建工集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 45400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="前川百秀街北延线道路工程（武麻联络线南路至一中北路）" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="2021年7月2日中标（武汉市盘龙明达建筑有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">前川百秀街北延线道路工程（武麻联络线南路至一中北路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2021年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2021年7月2日中标（武汉市盘龙明达建筑有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 42500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="盘龙城污水处理厂三期扩建" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月16日批复初设，5月19日中标（武汉市水务建设工程有限公司），已入库。">
+                <div class="project-header">
+                    <h3 class="project-name">盘龙城污水处理厂三期扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月16日批复初设，5月19日中标（武汉市水务建设工程有限公司），已入库。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 41500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="“五好两宜”和美乡村试点试验建设" 
+                 data-leader="阮诗军" 
+                 data-unit="姚家集街" 
+                 data-progress="2024年12月31日批复初设，2024年4月12日后陆续中标（武汉环通建设集团有限责任公司、武汉万中建设集团有限公司、湖北江鼎建设工程有限公司、湖北海致建筑有限公司等公司），已入库">
+                <div class="project-header">
+                    <h3 class="project-name">“五好两宜”和美乡村试点试验建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">阮诗军</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">姚家集街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月31日批复初设，2024年4月12日后陆续中标（武汉环通建设集团有限责任公司、武汉万中建设集团有限公司、湖北江鼎建设工程有限公司、湖北海致建筑有限公司等公司），已入库</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 41500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区E地块" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="4月27日招标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区E地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月27日招标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 41250万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区D地块" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="4月28日招标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区D地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月28日招标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 40460万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="前川街半岛雅都一期P（2024）113号地块" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="4月25日中标（武汉青林池建设工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">前川街半岛雅都一期P（2024）113号地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月25日中标（武汉青林池建设工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 38000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="G318黄陂二桥至火塔公路段改扩建" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2023年4月7日中标（武汉环通建设集团有限责任公司）">
+                <div class="project-header">
+                    <h3 class="project-name">G318黄陂二桥至火塔公路段改扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月7日中标（武汉环通建设集团有限责任公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 37500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区B地块" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="2月24日中标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区B地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2月24日中标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 37300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="G316黄孝公路沪蓉铁路至武大高速互通段改扩建" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2023年2月10日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">G316黄孝公路沪蓉铁路至武大高速互通段改扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年2月10日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 35300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="府河北路（盘龙三路—岱山桥段）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年5月18日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">府河北路（盘龙三路—岱山桥段）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年5月18日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 33600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="五里一期" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="备案项目，3月21日中标（（十九冶（湖北）建筑工程有限责任公司）">
+                <div class="project-header">
+                    <h3 class="project-name">五里一期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">备案项目，3月21日中标（（十九冶（湖北）建筑工程有限责任公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 33000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区C地块" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="1月26日中标（中铁十一局集团建筑安装工程有限公司），正好在进行主体结构施工">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区C地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">1月26日中标（中铁十一局集团建筑安装工程有限公司），正好在进行主体结构施工</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 32500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="恒瑞民轩一期" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="备案项目，4月1日中标（十九冶（湖北）建筑工程有限责任公司    ）">
+                <div class="project-header">
+                    <h3 class="project-name">恒瑞民轩一期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">备案项目，4月1日中标（十九冶（湖北）建筑工程有限责任公司    ）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 32000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="石道线川龙大道至岱黄高速" 
+                 data-leader="阮诗军" 
+                 data-unit="区交通运输局" 
+                 data-progress="2023年10月16日中标（武汉建工集团股份有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">石道线川龙大道至岱黄高速</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">阮诗军</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年10月16日中标（武汉建工集团股份有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 31500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="罗汉寺街棚户区改造" 
+                 data-leader="陈聪" 
+                 data-unit="罗汉寺街" 
+                 data-progress="2024年3月18日批复初设，2024年7月25日中标（ 武汉博宏建设集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">罗汉寺街棚户区改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">罗汉寺街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年3月18日批复初设，2024年7月25日中标（ 武汉博宏建设集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 29200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="夏家寺灌区续建配套与节水改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="国债项目，2024年12月11日中标（武汉盛科达科技有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">夏家寺灌区续建配套与节水改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">国债项目，2024年12月11日中标（武汉盛科达科技有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 27400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="滨湖路延长线（石道线至武大高速段）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年1月13日中标（中交二航局）。">
+                <div class="project-header">
+                    <h3 class="project-name">滨湖路延长线（石道线至武大高速段）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年1月13日中标（中交二航局）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 24800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="省多式联运、玉湖集团、万纬片区进出道路" 
+                 data-leader="陈聪" 
+                 data-unit="滠口街" 
+                 data-progress="2023年10月13日批复2、3号路，2023年9月5日批复1、4、5、6号路。2023年12月5日陆续中标（武汉市盘龙明达建筑有限公司、武汉汉北通达建设工程有限公司、武汉中顺泓建筑工程有限公司、武汉鑫源建筑工程有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">省多式联运、玉湖集团、万纬片区进出道路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年10月13日批复2、3号路，2023年9月5日批复1、4、5、6号路。2023年12月5日陆续中标（武汉市盘龙明达建筑有限公司、武汉汉北通达建设工程有限公司、武汉中顺泓建筑工程有限公司、武汉鑫源建筑工程有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 23000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="新十公路绕城高速至武湖村段" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="2024年3月12日中标（ 武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">新十公路绕城高速至武湖村段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年3月12日中标（ 武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 22700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        <span class="meta-item">📝 10月底已挂表</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="二环线西段" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2023年10月23日批复初设，2023年12月12日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">二环线西段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年10月23日批复初设，2023年12月12日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 19300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="汉口北西刘路" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2023年4月12日已中标（武汉市盘龙明达建筑有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北西刘路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月12日已中标（武汉市盘龙明达建筑有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 17600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="后湖二泵站新建" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2020年1月18日中标（湖北省汉江水利水电建筑工程有限责任公司）">
+                <div class="project-header">
+                    <h3 class="project-name">后湖二泵站新建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年02月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2020年1月18日中标（湖北省汉江水利水电建筑工程有限责任公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 16800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="祁家湾街综合还建点" 
+                 data-leader="陈聪" 
+                 data-unit="祁家湾街" 
+                 data-progress="2023年11月17日批复初设，2024年1月9日中标（武汉中生建工集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">祁家湾街综合还建点</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年11月17日批复初设，2024年1月9日中标（武汉中生建工集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 16800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="长新保障性租赁住房" 
+                 data-leader="陈聪" 
+                 data-unit="木兰投公司" 
+                 data-progress="2022年10月9日中标（武汉环通建设集团有限责任公司）">
+                <div class="project-header">
+                    <h3 class="project-name">长新保障性租赁住房</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年10月9日中标（武汉环通建设集团有限责任公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 16500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="甘露山文旅城沿河路" 
+                 data-leader="陈春晖" 
+                 data-unit="前川街" 
+                 data-progress="2024年10月16批复初设，2025年2月10日中标（武汉建工集团股份有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">甘露山文旅城沿河路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年10月16批复初设，2025年2月10日中标（武汉建工集团股份有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 15000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="实验二小" 
+                 data-leader="姜明" 
+                 data-unit="木兰投公司" 
+                 data-progress="2021年3月中标（武汉市政建设集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">实验二小</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">姜明</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2021年3月中标（武汉市政建设集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 13800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        <span class="meta-item">📝 迁改未完成</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="现代大道一期（东秀路－东兴路）" 
+                 data-leader="阮诗军" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2023年9月15日中标（ 武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">现代大道一期（东秀路－东兴路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">阮诗军</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年9月15日中标（ 武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 13700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="海航工业园一号路（蓝海南路－普洛斯三号路）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2022年12月16日中标（武汉二航路桥特种工程有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">海航工业园一号路（蓝海南路－普洛斯三号路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年12月16日中标（武汉二航路桥特种工程有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 13000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="汉口北梧桐路" 
+                 data-leader="姜明" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="2023年11月13日批复初设，2024年1月23日中标（湖北铁甲建设集团有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北梧桐路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">姜明</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年11月13日批复初设，2024年1月23日中标（湖北铁甲建设集团有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 12000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="黄孝南路" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2023年10月23日批复初设，2023年12月12日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">黄孝南路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年10月23日批复初设，2023年12月12日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 11000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="罗汉集镇“雁河里”" 
+                 data-leader="陈聪" 
+                 data-unit="木兰投公司" 
+                 data-progress="2024年12月6日中标（ 鲁班源集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">罗汉集镇“雁河里”</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月6日中标（ 鲁班源集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 11000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="省多式联运、玉湖集团、万纬片区外排水连通工程" 
+                 data-leader="郑威" 
+                 data-unit="滠口街" 
+                 data-progress="2024年1月4日批复初设，2023年12月31日中标（武汉市盘龙明达建筑有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">省多式联运、玉湖集团、万纬片区外排水连通工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年01月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月4日批复初设，2023年12月31日中标（武汉市盘龙明达建筑有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 9700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="汉口北物流园万纬园区道排工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2023年7月21日中标（武汉市盘龙明达建筑有限公司，湖北建科国际工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北物流园万纬园区道排工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年7月21日中标（武汉市盘龙明达建筑有限公司，湖北建科国际工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="北车基地站规划道路及配套市政管网" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="2024年5月16日中标（ 武汉市盘龙明达建筑有限公司，武汉中路宇勤勘察设计有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">北车基地站规划道路及配套市政管网</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年5月16日中标（ 武汉市盘龙明达建筑有限公司，武汉中路宇勤勘察设计有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="群乐一里北路" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2024年1月22日批复初设，2024年4月23日中标（武汉环通建设集团有限责任公司，安徽省城建设计研究总院股份有限公司 , 湖北京鄂市政建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">群乐一里北路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月22日批复初设，2024年4月23日中标（武汉环通建设集团有限责任公司，安徽省城建设计研究总院股份有限公司 , 湖北京鄂市政建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 7700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="通信线路迁改（含给水管道）" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空管委会" 
+                 data-progress="2024年12月11日中标（中国通信建设第三工程局有限公司，湖北省绿创建筑有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">通信线路迁改（含给水管道）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月11日中标（中国通信建设第三工程局有限公司，湖北省绿创建筑有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5900万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="四联垸泵站进水渠扩容整治" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2024年5月15日批复初设，2024年1月17日中标（ 武汉环通建设集团有限责任公司，武汉市市政路桥有限公司 , 武汉市政工程设计研究院有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">四联垸泵站进水渠扩容整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年5月15日批复初设，2024年1月17日中标（ 武汉环通建设集团有限责任公司，武汉市市政路桥有限公司 , 武汉市政工程设计研究院有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="小型水库除险加固工程" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2024年4月16日中标（武汉市黄陂区水利建筑安装工程公司，荆门市水利勘察设计院有限责任公司 , 武汉北永盛建设工程有限公司 , 中工武大设计集团有限公司）。国债项目。">
+                <div class="project-header">
+                    <h3 class="project-name">小型水库除险加固工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年4月16日中标（武汉市黄陂区水利建筑安装工程公司，荆门市水利勘察设计院有限责任公司 , 武汉北永盛建设工程有限公司 , 中工武大设计集团有限公司）。国债项目。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="前川一中迁建一期" 
+                 data-leader="姜明" 
+                 data-unit="木兰投公司" 
+                 data-progress="2023年11月16日批复初设，2024年1月2日中标（武汉环通建设集团有限责任公司，中建二局（湖北）建设有限公司 , 中南建筑设计院股份有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">前川一中迁建一期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">姜明</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年01月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年11月16日批复初设，2024年1月2日中标（武汉环通建设集团有限责任公司，中建二局（湖北）建设有限公司 , 中南建筑设计院股份有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        <span class="meta-item">📝 房子已交付</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="府河西湖堤（黄花涝）加固续建" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2024年12月31日批复初设，应急项目，施工单位（湖北江能水利水电建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">府河西湖堤（黄花涝）加固续建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年02月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月31日批复初设，应急项目，施工单位（湖北江能水利水电建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="东宇路一期（石道线－现代大道）" 
+                 data-leader="阮诗军" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2023年9月15日中标（武汉环通建设集团有限责任公司，北京市政建设集团有限责任公司 , 中都工程设计有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">东宇路一期（石道线－现代大道）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">阮诗军</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年9月15日中标（武汉环通建设集团有限责任公司，北京市政建设集团有限责任公司 , 中都工程设计有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="生活垃圾中转站改造" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2023年12月18日中标（武汉环通建设集团有限责任公司，武汉市承远市政工程设计有限公司 , 武汉市市政路桥有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">生活垃圾中转站改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年12月18日中标（武汉环通建设集团有限责任公司，武汉市承远市政工程设计有限公司 , 武汉市市政路桥有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="东秀路（石道线－现代大道）" 
+                 data-leader="阮诗军" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2023年9月15日中标（武汉环通建设集团有限责任公司，北京市政建设集团有限责任公司 , 中都工程设计有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">东秀路（石道线－现代大道）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">阮诗军</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年9月15日中标（武汉环通建设集团有限责任公司，北京市政建设集团有限责任公司 , 中都工程设计有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4100万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="工业园福瑞西路" 
+                 data-leader="陈聪" 
+                 data-unit="罗汉寺街" 
+                 data-progress="2024年1月30日批复初设，2025年1月20日中标（义仁建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">工业园福瑞西路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">罗汉寺街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月30日批复初设，2025年1月20日中标（义仁建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3100万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="环祁路与祁川连接线工程" 
+                 data-leader="陈春晖" 
+                 data-unit="祁家湾街" 
+                 data-progress="2024年1月22日批复初设，2024年9月19日中标（湖北铁甲建设集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">环祁路与祁川连接线工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月22日批复初设，2024年9月19日中标（湖北铁甲建设集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="武汉现代农产品加工园污水主干管网" 
+                 data-leader="阮诗军" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2024年12月6日批复初设，应急项目，10月30日签订施工合同（湖北文枫建设工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">武汉现代农产品加工园污水主干管网</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">阮诗军</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月6日批复初设，应急项目，10月30日签订施工合同（湖北文枫建设工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="S334木兰山至红安李先念故居纪念园旅游公路" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2024年12月24日中标，因征地费和指标费未缴纳，项目未开工。">
+                <div class="project-header">
+                    <h3 class="project-name">S334木兰山至红安李先念故居纪念园旅游公路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年02月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月24日中标，因征地费和指标费未缴纳，项目未开工。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="泊沫港河重点山洪沟防洪治理" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2024年3月29日批复初设，2024年6月17日中标（武汉市黄陂区水利建筑安装工程公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">泊沫港河重点山洪沟防洪治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年3月29日批复初设，2024年6月17日中标（武汉市黄陂区水利建筑安装工程公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1750万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="什仔湖周边村湾污水治理" 
+                 data-leader="郑威" 
+                 data-unit="滠口街" 
+                 data-progress="2024年2月20日批复初设，2025年7月23日已中标（湖北滠晟工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">什仔湖周边村湾污水治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年2月20日批复初设，2025年7月23日已中标（湖北滠晟工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="涂店小学改建市砺志中学" 
+                 data-leader="姜明" 
+                 data-unit="区教育局" 
+                 data-progress="2024年12月12日批复初设，2025年3月3日中标（ 武汉鑫源建筑工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">涂店小学改建市砺志中学</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">姜明</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区教育局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月12日批复初设，2025年3月3日中标（ 武汉鑫源建筑工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="涂店小学改建市砺志中学建设项目二期" 
+                 data-leader="姜明" 
+                 data-unit="区教育局" 
+                 data-progress="6月6日批复初设，8月19日中标（武汉鑫源建筑工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">涂店小学改建市砺志中学建设项目二期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">姜明</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区教育局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月6日批复初设，8月19日中标（武汉鑫源建筑工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="龙巢小区排水改造" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="5月15日批复初设，7月31日中标（武汉市水务建设工程有限公司，武汉市政工程设计研究院有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">龙巢小区排水改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">5月15日批复初设，7月31日中标（武汉市水务建设工程有限公司，武汉市政工程设计研究院有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="钟声街市政基础设施配套" 
+                 data-leader="陈春晖" 
+                 data-unit="姚家集街" 
+                 data-progress="4月23日批复初设，9月30日中标（武汉通达兴旺建筑工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">钟声街市政基础设施配套</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">姚家集街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月23日批复初设，9月30日中标（武汉通达兴旺建筑工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="横店街临空东区C0202地块燃气管道迁改工程" 
+                 data-leader="阮诗军" 
+                 data-unit="横店街" 
+                 data-progress="2023年12月24日中标（武汉能源规划设计有限公司，中石化江汉油建工程有限公司），续建项目。">
+                <div class="project-header">
+                    <h3 class="project-name">横店街临空东区C0202地块燃气管道迁改工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">阮诗军</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年01月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年12月24日中标（武汉能源规划设计有限公司，中石化江汉油建工程有限公司），续建项目。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="蓝海南路北段（横店大道－临空北路）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2023年4月27日中标，正在办理用地手续。">
+                <div class="project-header">
+                    <h3 class="project-name">蓝海南路北段（横店大道－临空北路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月27日中标，正在办理用地手续。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 10700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="蓝海二路北段（横店大道－临空北路）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2023年4月27日中标，正在办理用地手续。">
+                <div class="project-header">
+                    <h3 class="project-name">蓝海二路北段（横店大道－临空北路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月27日中标，正在办理用地手续。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 15700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="燃气配套设施老化更新升级改造" 
+                 data-leader="彭斌祥" 
+                 data-unit="区城管局" 
+                 data-progress="2024年7月30日批复初设，未争取到国家资金，2024年12月12日中标（华润燃气郑州工程建设有限公司，武汉蓝焰自动化应用技术有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">燃气配套设施老化更新升级改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区城管局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年7月30日批复初设，未争取到国家资金，2024年12月12日中标（华润燃气郑州工程建设有限公司，武汉蓝焰自动化应用技术有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 7800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="森林火灾高风险区综合治理建设项目" 
+                 data-leader="彭斌祥" 
+                 data-unit="区园林和林业局" 
+                 data-progress="2024年12月14日中标（武汉市花木有限公司），9月11日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">森林火灾高风险区综合治理建设项目</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区园林和林业局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月14日中标（武汉市花木有限公司），9月11日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1550万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="庆云街道排工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="9月25日中标（武汉市青山市政建设集团有限公司，武汉市政工程设计研究院有限责任公司 , 武汉市生态园林集团有限公司 , 武汉誉城临空建设工程有限公司），10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">庆云街道排工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月25日中标（武汉市青山市政建设集团有限公司，武汉市政工程设计研究院有限责任公司 , 武汉市生态园林集团有限公司 , 武汉誉城临空建设工程有限公司），10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 37400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="新十公路汉口北大道至万家咀段市政配套工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="9月3日中标（武汉环通建设集团有限责任公司，北京市政建设集团有限责任公司），已开工，正在报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">新十公路汉口北大道至万家咀段市政配套工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月3日中标（武汉环通建设集团有限责任公司，北京市政建设集团有限责任公司），已开工，正在报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 31200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="北部地区供水系统集并-泥河水厂供水系统" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="6月26日批复初设，9月2日中标（武汉建工集团工程总承包有限公司，湖北乐宇建设工程有限公司），10月25日报送入库资料至区统计局。">
+                <div class="project-header">
+                    <h3 class="project-name">北部地区供水系统集并-泥河水厂供水系统</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月26日批复初设，9月2日中标（武汉建工集团工程总承包有限公司，湖北乐宇建设工程有限公司），10月25日报送入库资料至区统计局。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 31200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="市高压燃气管网（含华润燃气管道）迁改及防护" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空管委会" 
+                 data-progress="9月1日定标（中国化学工程第十六建设有限公司），9月26签订施工合同，9月30日进场施工，10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">市高压燃气管网（含华润燃气管道）迁改及防护</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月1日定标（中国化学工程第十六建设有限公司），9月26签订施工合同，9月30日进场施工，10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 9500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="10KV电力线路迁改" 
+                 data-leader="彭斌祥" 
+                 data-unit="区经创局" 
+                 data-progress="7月4日中标（武汉凯源电力科技有限公司），10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">10KV电力线路迁改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月4日中标（武汉凯源电力科技有限公司），10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="华师盘龙城校区场平（清表）" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="盘龙城已开始施工，不作为临空投项目重复实施。">
+                <div class="project-header">
+                    <h3 class="project-name">华师盘龙城校区场平（清表）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">盘龙城已开始施工，不作为临空投项目重复实施。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 场平项目，无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="中小学空调更新及电力增容" 
+                 data-leader="姜明" 
+                 data-unit="区教育局" 
+                 data-progress="7月8日批复初设，8月15日中标（湖北喜赛建设工程有限公司），项目走空调购置流程。">
+                <div class="project-header">
+                    <h3 class="project-name">中小学空调更新及电力增容</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">姜明</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区教育局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月8日批复初设，8月15日中标（湖北喜赛建设工程有限公司），项目走空调购置流程。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="35KV电力线路迁改" 
+                 data-leader="彭斌祥" 
+                 data-unit="区经创局" 
+                 data-progress="市供电公司内部签订代建协议，9月27日中标（湖北既济电力集团有限公司），10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">35KV电力线路迁改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">市供电公司内部签订代建协议，9月27日中标（湖北既济电力集团有限公司），10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="湖泊蓝藻水华风险防控应急工程" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="施工单位（武汉控股），政府购买服务项目无需走发改审批程序。">
+                <div class="project-header">
+                    <h3 class="project-name">湖泊蓝藻水华风险防控应急工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">施工单位（武汉控股），政府购买服务项目无需走发改审批程序。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="重大项目场平" 
+                 data-leader="彭斌祥" 
+                 data-unit="横店街" 
+                 data-progress="7月9日批复初设，10月24日中标（武汉市黄陂区第五工业建筑有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">重大项目场平</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月9日批复初设，10月24日中标（武汉市黄陂区第五工业建筑有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 场平项目，无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="钓场渠湿地生态修复和保护" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="6月30日批复初设，8月15日中标（湖北园道工程建设有限公司，武汉市政工程设计研究院有限责任公司），9月19日报送入库资料至区统计局。">
+                <div class="project-header">
+                    <h3 class="project-name">钓场渠湿地生态修复和保护</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月30日批复初设，8月15日中标（湖北园道工程建设有限公司，武汉市政工程设计研究院有限责任公司），9月19日报送入库资料至区统计局。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1900万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="名流人和小区混错接点改造" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="7月2日批复初设，8月15日中标（武汉市水务建设工程有限公司，武汉市政工程设计研究院有限责任公司），9月19日报送入库资料至区统计局。">
+                <div class="project-header">
+                    <h3 class="project-name">名流人和小区混错接点改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月2日批复初设，8月15日中标（武汉市水务建设工程有限公司，武汉市政工程设计研究院有限责任公司），9月19日报送入库资料至区统计局。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1450万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 10月底已挂表</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="2024年老旧小区改造工程增补项目" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="9月5日中标（湖北庭廷建设工程有限公司），10月22日签订施工合同，10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">2024年老旧小区改造工程增补项目</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月5日中标（湖北庭廷建设工程有限公司），10月22日签订施工合同，10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1450万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="输油管道迁改及防护" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空管委会" 
+                 data-progress="9月24日中标（中榈工程科技有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">输油管道迁改及防护</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月24日中标（中榈工程科技有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1100万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="任凯湖3#排口整治" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="7.2日批复初设，政府采购项目，9月28日中标（中标单位是湖北园道工程建设有限公司、武汉市政工程设计研究院有限责任公司（联合体）），已完工，实际投资236万元，未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">任凯湖3#排口整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7.2日批复初设，政府采购项目，9月28日中标（中标单位是湖北园道工程建设有限公司、武汉市政工程设计研究院有限责任公司（联合体）），已完工，实际投资236万元，未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="军队离休退休干部服务管理用房" 
+                 data-leader="焦建" 
+                 data-unit="区退役军人事务局" 
+                 data-progress="2023年2月10日批复初设，2023年9月8日装修中标（武汉市西城建筑工程公司），9月18日采购中标（湖北立康建设工程有限公司），政府采购项目，未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">军队离休退休干部服务管理用房</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">焦建</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区退役军人事务局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年2月10日批复初设，2023年9月8日装修中标（武汉市西城建筑工程公司），9月18日采购中标（湖北立康建设工程有限公司），政府采购项目，未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 570万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="老县委县政府配电改造" 
+                 data-leader="郑威" 
+                 data-unit="区机关事务服务中心" 
+                 data-progress="9月22日中标（黄陂宏光公司），10月15日签订施工合同，10月23日开工，政府采购项目，未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">老县委县政府配电改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区机关事务服务中心</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月22日中标（黄陂宏光公司），10月15日签订施工合同，10月23日开工，政府采购项目，未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="李家集街泥人王村地质灾害治理" 
+                 data-leader="陈春晖" 
+                 data-unit="区自建局" 
+                 data-progress="2024年9月11日批复初设，1月9日中标（武汉建荣岩土工程有限公司，武汉九环公路工程有限公司，中南勘察基础工程有限公司），未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">李家集街泥人王村地质灾害治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区自建局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年9月11日批复初设，1月9日中标（武汉建荣岩土工程有限公司，武汉九环公路工程有限公司，中南勘察基础工程有限公司），未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 469万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="蔡店街、长轩岭街地质灾害治理" 
+                 data-leader="陈春晖" 
+                 data-unit="区自建局" 
+                 data-progress="2024年2月28日批复初设，1月9日中标（武汉建荣岩土工程有限公司，武汉九环公路工程有限公司，中南勘察基础工程有限公司），未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">蔡店街、长轩岭街地质灾害治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区自建局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年2月28日批复初设，1月9日中标（武汉建荣岩土工程有限公司，武汉九环公路工程有限公司，中南勘察基础工程有限公司），未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="2025年高考标准化考点设备采购" 
+                 data-leader="姜明" 
+                 data-unit="区教育局" 
+                 data-progress="4月18日批复初设，5月27日中标（联通数字科技有限公司湖北省分公司），政府采购项目，未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">2025年高考标准化考点设备采购</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">姜明</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区教育局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月18日批复初设，5月27日中标（联通数字科技有限公司湖北省分公司），政府采购项目，未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 240万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="木兰山祈嗣顶X波段气象雷达供电工程" 
+                 data-leader="郑威" 
+                 data-unit="区气象局" 
+                 data-progress="6月9日中标（湖北粟阳建设工程有限公司），已完工，政府采购项目，未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰山祈嗣顶X波段气象雷达供电工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区气象局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月9日中标（湖北粟阳建设工程有限公司），已完工，政府采购项目，未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 120万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="甘露山文旅城滠水东堤加固工程" 
+                 data-leader="陈春晖" 
+                 data-unit="前川街" 
+                 data-progress="2021年7月2日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">甘露山文旅城滠水东堤加固工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2021年7月2日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 17300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="S234韩集至长岭岗段" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="5月30日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">S234韩集至长岭岗段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">5月30日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 9600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="什仔湖、小菜湖、李家大湖三湖联通整治" 
+                 data-leader="郑威" 
+                 data-unit="滠口街" 
+                 data-progress="9月29日召开初设评审会，正在修编">
+                <div class="project-header">
+                    <h3 class="project-name">什仔湖、小菜湖、李家大湖三湖联通整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月29日召开初设评审会，正在修编</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="汉口北大道10kv电力线路迁改入地工程电气部分" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北大道10kv电力线路迁改入地工程电气部分</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1780万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="茶韵公园“双百”示范片区提升" 
+                 data-leader="陈春晖" 
+                 data-unit="蔡榨街" 
+                 data-progress="2024年7月30日批复初设（代可研）。">
+                <div class="project-header">
+                    <h3 class="project-name">茶韵公园“双百”示范片区提升</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈春晖</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">蔡榨街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年7月30日批复初设（代可研）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 900万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="幸福食堂" 
+                 data-leader="张国金" 
+                 data-unit="区民政局" 
+                 data-progress="盘龙城天汇社区幸福食堂于2025年5月21日批复、前川街新村社区幸福食堂于2025年5月23日批复、天河街新建社区幸福食堂于2025年7月30日批复">
+                <div class="project-header">
+                    <h3 class="project-name">幸福食堂</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">张国金</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区民政局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">盘龙城天汇社区幸福食堂于2025年5月21日批复、前川街新村社区幸福食堂于2025年5月23日批复、天河街新建社区幸福食堂于2025年7月30日批复</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 240万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+
+        <div class="last-updated">
+            最后更新: 2025-11-07 11:23:11
+        </div>
+    </div>
+
+    <script>
+        // 搜索功能
+        function filterProjects() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const projects = document.getElementsByClassName('project-card');
+
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                const name = project.getAttribute('data-name').toLowerCase();
+                const leader = project.getAttribute('data-leader').toLowerCase();
+                const unit = project.getAttribute('data-unit').toLowerCase();
+                const progress = project.getAttribute('data-progress').toLowerCase();
+
+                if (name.includes(filter) || leader.includes(filter) || 
+                    unit.includes(filter) || progress.includes(filter)) {
+                    project.style.display = '';
+                } else {
+                    project.style.display = 'none';
+                }
+            }
+        }
+
+        
+    </script>
+</body>
+</html>

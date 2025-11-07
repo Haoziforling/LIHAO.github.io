@@ -1,0 +1,2853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陈聪 分管项目 - 项目进度跟踪系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; color: #333; line-height: 1.6; padding: 10px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 15px; }
+        .stats { display: flex; gap: 15px; }
+        .stat-card { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
+        .stat-card.started { background: rgba(76, 175, 80, 0.3); }
+        .stat-card.nashuitong { background: rgba(255, 152, 0, 0.3); }
+        .stat-number { display: block; font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.9; }
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; outline: none; }
+        .search-box input:focus { border-color: #667eea; }
+        .project-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-left: 4px solid #667eea; width: 100%; }
+        .project-card.started { border-left-color: #4CAF50; }
+        .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .project-name { flex: 1; font-size: 1.1rem; color: #2c3e50; margin-right: 10px; }
+        .status-badges { display: flex; gap: 5px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+        .status-badge.started { background: #4CAF50; color: white; }
+        .status-badge.not-started { background: #ff9800; color: white; }
+        .status-badge.nashuitong { background: #2196F3; color: white; }
+        .detail-item { margin-bottom: 8px; display: flex; }
+        .detail-item strong { color: #666; min-width: 80px; }
+        .leader { color: #e74c3c; font-weight: bold; }
+        .unit { color: #3498db; font-weight: bold; }
+        .progress-text { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 5px; border-left: 3px solid #667eea; }
+        .project-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .meta-item { font-size: 0.8rem; color: #666; background: #f8f9fa; padding: 3px 6px; border-radius: 4px; }
+        .last-updated { text-align: center; color: #666; font-size: 0.8rem; margin-top: 10px; }
+        .nav-links { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .nav-link { background: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; color: #333; font-size: 0.9rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .nav-link:hover { background: #667eea; color: white; }
+        @media (max-width: 768px) {
+            .stats { flex-direction: column; gap: 10px; }
+            .project-header { flex-direction: column; align-items: flex-start; }
+            .status-badges { margin-top: 8px; }
+            .detail-item { flex-direction: column; }
+            .detail-item strong { min-width: auto; margin-bottom: 2px; }
+            .nav-links { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部统计信息 -->
+        <div class="header">
+            <h1>📊 项目进度跟踪</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number">62</span>
+                    <span class="stat-label">总项目数</span>
+                </div>
+                <div class="stat-card started">
+                    <span class="stat-number">34</span>
+                    <span class="stat-label">已开工</span>
+                </div>
+                <div class="stat-card nashuitong">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">已纳统</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 所有项目</a>
+            <a href="started.html" class="nav-link">✅ 已开工</a>
+            <a href="not-started.html" class="nav-link">⏳ 未开工</a>
+            <a href="search.html" class="nav-link">🔍 搜索项目</a>
+        </div>
+
+        <!-- 页面标题 -->
+        <h2 style="margin-bottom: 15px;">陈聪 分管项目</h2>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索项目名称、分管领导、责任单位..." 
+                   onkeyup="filterProjects()">
+        </div>
+
+        <!-- 项目列表 -->
+        <div class="projects-list" id="projectsList">
+            
+            <div class="project-card started" 
+                 data-name="陈榨湾安置型商品房P（2024）083、098号地块" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="备案项目（中建二局）。">
+                <div class="project-header">
+                    <h3 class="project-name">陈榨湾安置型商品房P（2024）083、098号地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">备案项目（中建二局）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 160000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="红焰一期 P（2023）077号地块" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="2024年12月开工（誉城九方）。">
+                <div class="project-header">
+                    <h3 class="project-name">红焰一期 P（2023）077号地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月开工（誉城九方）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 96500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="红焰一期P（2023）100号地块" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="备案项目（誉城九方）">
+                <div class="project-header">
+                    <h3 class="project-name">红焰一期P（2023）100号地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">备案项目（誉城九方）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 84700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="川龙大道京九街至京广铁路跨线桥改造" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2021年3月3日中标（新八建设集团有限公司/广东省冶金建筑设计研究院有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">川龙大道京九街至京广铁路跨线桥改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2021年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2021年3月3日中标（新八建设集团有限公司/广东省冶金建筑设计研究院有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 83100万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="投卓· 桃花安置房" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="2024年5月开工（中铁十四局）。">
+                <div class="project-header">
+                    <h3 class="project-name">投卓· 桃花安置房</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年5月开工（中铁十四局）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 69000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="西郊花园还建小区-A区" 
+                 data-leader="陈聪" 
+                 data-unit="横店街" 
+                 data-progress="2022年3月12日批复初设，2022年3月29日中标（武汉市政环境工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">西郊花园还建小区-A区</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年3月12日批复初设，2022年3月29日中标（武汉市政环境工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 64400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="西郊花园还建小区-B区" 
+                 data-leader="陈聪" 
+                 data-unit="横店街" 
+                 data-progress="2023年5月16日批复初设，2023年7月1日中标（武汉市政环境工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">西郊花园还建小区-B区</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年5月16日批复初设，2023年7月1日中标（武汉市政环境工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 51400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="投卓· 桃花安置房（北区）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="2024年1月4日中标（中铁十四局集团武汉玖通工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">投卓· 桃花安置房（北区）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月4日中标（中铁十四局集团武汉玖通工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 48000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区A地块" 
+                 data-leader="陈聪" 
+                 data-unit="天河街" 
+                 data-progress="2023年9月18日批复初设，1月22日中标（武汉华艺建筑工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区A地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">天河街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年9月18日批复初设，1月22日中标（武汉华艺建筑工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 46500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="三街安居还建小区四期（地块一）" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2023年4月20日批复初设，2022年12月26日中标（武汉市第三建工集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">三街安居还建小区四期（地块一）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月20日批复初设，2022年12月26日中标（武汉市第三建工集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 45400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="前川百秀街北延线道路工程（武麻联络线南路至一中北路）" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="2021年7月2日中标（武汉市盘龙明达建筑有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">前川百秀街北延线道路工程（武麻联络线南路至一中北路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2021年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2021年7月2日中标（武汉市盘龙明达建筑有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 42500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区E地块" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="4月27日招标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区E地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月27日招标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 41250万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区D地块" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="4月28日招标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区D地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月28日招标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 40460万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="前川街半岛雅都一期P（2024）113号地块" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="4月25日中标（武汉青林池建设工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">前川街半岛雅都一期P（2024）113号地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">4月25日中标（武汉青林池建设工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 38000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区B地块" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="2月24日中标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区B地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2月24日中标（十九冶（湖北）建筑工程有限责任公司），正好在进行主体结构施工</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 37300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="五里一期" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="备案项目，3月21日中标（（十九冶（湖北）建筑工程有限责任公司）">
+                <div class="project-header">
+                    <h3 class="project-name">五里一期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">备案项目，3月21日中标（（十九冶（湖北）建筑工程有限责任公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 33000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="天新小区C地块" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="1月26日中标（中铁十一局集团建筑安装工程有限公司），正好在进行主体结构施工">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区C地块</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年03月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">1月26日中标（中铁十一局集团建筑安装工程有限公司），正好在进行主体结构施工</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 32500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="恒瑞民轩一期" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="备案项目，4月1日中标（十九冶（湖北）建筑工程有限责任公司    ）">
+                <div class="project-header">
+                    <h3 class="project-name">恒瑞民轩一期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">备案项目，4月1日中标（十九冶（湖北）建筑工程有限责任公司    ）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 32000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="罗汉寺街棚户区改造" 
+                 data-leader="陈聪" 
+                 data-unit="罗汉寺街" 
+                 data-progress="2024年3月18日批复初设，2024年7月25日中标（ 武汉博宏建设集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">罗汉寺街棚户区改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">罗汉寺街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年3月18日批复初设，2024年7月25日中标（ 武汉博宏建设集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 29200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="省多式联运、玉湖集团、万纬片区进出道路" 
+                 data-leader="陈聪" 
+                 data-unit="滠口街" 
+                 data-progress="2023年10月13日批复2、3号路，2023年9月5日批复1、4、5、6号路。2023年12月5日陆续中标（武汉市盘龙明达建筑有限公司、武汉汉北通达建设工程有限公司、武汉中顺泓建筑工程有限公司、武汉鑫源建筑工程有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">省多式联运、玉湖集团、万纬片区进出道路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年10月13日批复2、3号路，2023年9月5日批复1、4、5、6号路。2023年12月5日陆续中标（武汉市盘龙明达建筑有限公司、武汉汉北通达建设工程有限公司、武汉中顺泓建筑工程有限公司、武汉鑫源建筑工程有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 23000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="新十公路绕城高速至武湖村段" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="2024年3月12日中标（ 武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">新十公路绕城高速至武湖村段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年3月12日中标（ 武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 22700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        <span class="meta-item">📝 10月底已挂表</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="二环线西段" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2023年10月23日批复初设，2023年12月12日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">二环线西段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年10月23日批复初设，2023年12月12日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 19300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="汉口北西刘路" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2023年4月12日已中标（武汉市盘龙明达建筑有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北西刘路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月12日已中标（武汉市盘龙明达建筑有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 17600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="祁家湾街综合还建点" 
+                 data-leader="陈聪" 
+                 data-unit="祁家湾街" 
+                 data-progress="2023年11月17日批复初设，2024年1月9日中标（武汉中生建工集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">祁家湾街综合还建点</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年11月17日批复初设，2024年1月9日中标（武汉中生建工集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 16800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="长新保障性租赁住房" 
+                 data-leader="陈聪" 
+                 data-unit="木兰投公司" 
+                 data-progress="2022年10月9日中标（武汉环通建设集团有限责任公司）">
+                <div class="project-header">
+                    <h3 class="project-name">长新保障性租赁住房</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年10月9日中标（武汉环通建设集团有限责任公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 16500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="海航工业园一号路（蓝海南路－普洛斯三号路）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2022年12月16日中标（武汉二航路桥特种工程有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">海航工业园一号路（蓝海南路－普洛斯三号路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年12月16日中标（武汉二航路桥特种工程有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 13000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="黄孝南路" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2023年10月23日批复初设，2023年12月12日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">黄孝南路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年10月23日批复初设，2023年12月12日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 11000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="罗汉集镇“雁河里”" 
+                 data-leader="陈聪" 
+                 data-unit="木兰投公司" 
+                 data-progress="2024年12月6日中标（ 鲁班源集团有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">罗汉集镇“雁河里”</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月6日中标（ 鲁班源集团有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 11000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="北车基地站规划道路及配套市政管网" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="2024年5月16日中标（ 武汉市盘龙明达建筑有限公司，武汉中路宇勤勘察设计有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">北车基地站规划道路及配套市政管网</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年5月16日中标（ 武汉市盘龙明达建筑有限公司，武汉中路宇勤勘察设计有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="群乐一里北路" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2024年1月22日批复初设，2024年4月23日中标（武汉环通建设集团有限责任公司，安徽省城建设计研究总院股份有限公司 , 湖北京鄂市政建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">群乐一里北路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月22日批复初设，2024年4月23日中标（武汉环通建设集团有限责任公司，安徽省城建设计研究总院股份有限公司 , 湖北京鄂市政建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 7700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="工业园福瑞西路" 
+                 data-leader="陈聪" 
+                 data-unit="罗汉寺街" 
+                 data-progress="2024年1月30日批复初设，2025年1月20日中标（义仁建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">工业园福瑞西路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">罗汉寺街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月30日批复初设，2025年1月20日中标（义仁建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3100万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="蓝海南路北段（横店大道－临空北路）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2023年4月27日中标，正在办理用地手续。">
+                <div class="project-header">
+                    <h3 class="project-name">蓝海南路北段（横店大道－临空北路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月27日中标，正在办理用地手续。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 10700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="蓝海二路北段（横店大道－临空北路）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2023年4月27日中标，正在办理用地手续。">
+                <div class="project-header">
+                    <h3 class="project-name">蓝海二路北段（横店大道－临空北路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月27日中标，正在办理用地手续。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 15700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="2024年老旧小区改造工程增补项目" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="9月5日中标（湖北庭廷建设工程有限公司），10月22日签订施工合同，10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">2024年老旧小区改造工程增补项目</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月5日中标（湖北庭廷建设工程有限公司），10月22日签订施工合同，10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1450万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="后湖·沁居湖畔" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="9月30日批复可研，初设编制中">
+                <div class="project-header">
+                    <h3 class="project-name">后湖·沁居湖畔</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复可研，初设编制中</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 36000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="创新五路" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="2024年10月31日批复初设，正在准备财评资料，预计10月底报财政局审批，新增建设用地指标同步落实。">
+                <div class="project-header">
+                    <h3 class="project-name">创新五路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年10月31日批复初设，正在准备财评资料，预计10月底报财政局审批，新增建设用地指标同步落实。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 24000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="合丰还建点" 
+                 data-leader="陈聪" 
+                 data-unit="罗汉寺街" 
+                 data-progress="2023年11月30日批复初设，因2025年5月1日建筑设计新规，重新编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">合丰还建点</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">罗汉寺街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年11月30日批复初设，因2025年5月1日建筑设计新规，重新编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 22200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="蓝海南路（机场北环线～横店大道）" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2023年4月27日中标，正在办理用地手续。">
+                <div class="project-header">
+                    <h3 class="project-name">蓝海南路（机场北环线～横店大道）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月27日中标，正在办理用地手续。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 19000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="汉十北路" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="区发改局已批复可研。">
+                <div class="project-header">
+                    <h3 class="project-name">汉十北路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">区发改局已批复可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 16500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        <span class="meta-item">📝 企业不投产，取消计划</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="木兰大道二期改造配套还建" 
+                 data-leader="陈聪" 
+                 data-unit="长轩岭街" 
+                 data-progress="2023年4月7日中标（武汉鑫源建筑工程有限公司,中都工程设计有限公司），正在征地。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰大道二期改造配套还建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">长轩岭街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月7日中标（武汉鑫源建筑工程有限公司,中都工程设计有限公司），正在征地。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 14800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="傍花路" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">傍花路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 10600万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天新二路" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="10月20日批复初设，正在编制施工图。">
+                <div class="project-header">
+                    <h3 class="project-name">天新二路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月20日批复初设，正在编制施工图。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8600万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 天河新市镇全部陈聪常委</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天新小区配套工程" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="9月22日批复可研，盘龙交投正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">天新小区配套工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月22日批复可研，盘龙交投正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="桃元工业园横一路" 
+                 data-leader="陈聪" 
+                 data-unit="滠口街" 
+                 data-progress="7月28日批复可研，初设编制中">
+                <div class="project-header">
+                    <h3 class="project-name">桃元工业园横一路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月28日批复可研，初设编制中</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="2025年老旧小区及配套设施改造" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="8月8日批复可研，区住更局正在修编初设。">
+                <div class="project-header">
+                    <h3 class="project-name">2025年老旧小区及配套设施改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月8日批复可研，区住更局正在修编初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="武大高速和合武铁路夹角地公共停车场" 
+                 data-leader="陈聪" 
+                 data-unit="滠口街" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">武大高速和合武铁路夹角地公共停车场</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="汇江西路" 
+                 data-leader="陈聪" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="2024年7月12日批复初设，还未招标，正在报地。">
+                <div class="project-header">
+                    <h3 class="project-name">汇江西路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年7月12日批复初设，还未招标，正在报地。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="前川实验小学周边配套道路" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="6月3日区住更局完成招标（四川启创建设工程有限公司，山东黄河建工有限公司，武汉鑫瑞腾建设工程有限公司），正在报送用地组卷资料。">
+                <div class="project-header">
+                    <h3 class="project-name">前川实验小学周边配套道路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月3日区住更局完成招标（四川启创建设工程有限公司，山东黄河建工有限公司，武汉鑫瑞腾建设工程有限公司），正在报送用地组卷资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="桃元工业园横三路" 
+                 data-leader="陈聪" 
+                 data-unit="滠口街" 
+                 data-progress="7月28日批复可研，初设编制中">
+                <div class="project-header">
+                    <h3 class="project-name">桃元工业园横三路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月28日批复可研，初设编制中</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="定远公园南路西延线" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="6月23日批复项目建议书，正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">定远公园南路西延线</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月23日批复项目建议书，正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="环祁东路与祁兴路连接线" 
+                 data-leader="陈聪" 
+                 data-unit="祁家湾街" 
+                 data-progress="10月17日批复项目建议书，正在编制可研">
+                <div class="project-header">
+                    <h3 class="project-name">环祁东路与祁兴路连接线</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月17日批复项目建议书，正在编制可研</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="滠口街安全隐患整改" 
+                 data-leader="陈聪" 
+                 data-unit="滠口街" 
+                 data-progress="可研正在修编">
+                <div class="project-header">
+                    <h3 class="project-name">滠口街安全隐患整改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">可研正在修编</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="工业园四号路" 
+                 data-leader="陈聪" 
+                 data-unit="祁家湾街" 
+                 data-progress="2024年12月20日批复初设，9月财评结束，11月7日前开标，已形成施工现场，11月底报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">工业园四号路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年01月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月20日批复初设，9月财评结束，11月7日前开标，已形成施工现场，11月底报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="姜家田还建小区配套电力工程" 
+                 data-leader="陈聪" 
+                 data-unit="长轩岭街" 
+                 data-progress="正在编制可研">
+                <div class="project-header">
+                    <h3 class="project-name">姜家田还建小区配套电力工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">长轩岭街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="东寺城中村改造还建房配电工程" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="正在可研修编。">
+                <div class="project-header">
+                    <h3 class="project-name">东寺城中村改造还建房配电工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在可研修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="横店临空产业园一期路灯大修" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">横店临空产业园一期路灯大修</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="自来水厂北路" 
+                 data-leader="陈聪" 
+                 data-unit="前川街" 
+                 data-progress="正在编制可研">
+                <div class="project-header">
+                    <h3 class="project-name">自来水厂北路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="李家院子还建小区出行路" 
+                 data-leader="陈聪" 
+                 data-unit="滠口街" 
+                 data-progress="10月20日批复初设，正在准备财评资料。">
+                <div class="project-header">
+                    <h3 class="project-name">李家院子还建小区出行路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月20日批复初设，正在准备财评资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1100万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="罗汉工业园B区创新大道维修改造" 
+                 data-leader="陈聪" 
+                 data-unit="罗汉寺街" 
+                 data-progress="9月4日批复可研，初设编制中">
+                <div class="project-header">
+                    <h3 class="project-name">罗汉工业园B区创新大道维修改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">罗汉寺街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月4日批复可研，初设编制中</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 950万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="公租房（人才房）维修改造" 
+                 data-leader="陈聪" 
+                 data-unit="区住更局" 
+                 data-progress="8月21日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">公租房（人才房）维修改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区住更局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月21日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 600万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="机电工业园基础设施" 
+                 data-leader="陈聪" 
+                 data-unit="祁家湾街" 
+                 data-progress="9月8日批复初设，正在财评">
+                <div class="project-header">
+                    <h3 class="project-name">机电工业园基础设施</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月8日批复初设，正在财评</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 550万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河街C级危房维修加固" 
+                 data-leader="陈聪" 
+                 data-unit="天河街" 
+                 data-progress="9月30日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">天河街C级危房维修加固</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">陈聪</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">天河街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+
+        <div class="last-updated">
+            最后更新: 2025-11-07 11:23:11
+        </div>
+    </div>
+
+    <script>
+        // 搜索功能
+        function filterProjects() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const projects = document.getElementsByClassName('project-card');
+
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                const name = project.getAttribute('data-name').toLowerCase();
+                const leader = project.getAttribute('data-leader').toLowerCase();
+                const unit = project.getAttribute('data-unit').toLowerCase();
+                const progress = project.getAttribute('data-progress').toLowerCase();
+
+                if (name.includes(filter) || leader.includes(filter) || 
+                    unit.includes(filter) || progress.includes(filter)) {
+                    project.style.display = '';
+                } else {
+                    project.style.display = 'none';
+                }
+            }
+        }
+
+        
+    </script>
+</body>
+</html>

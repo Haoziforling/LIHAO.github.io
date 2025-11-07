@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>李书涛 分管项目 - 项目进度跟踪系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; color: #333; line-height: 1.6; padding: 10px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 15px; }
+        .stats { display: flex; gap: 15px; }
+        .stat-card { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
+        .stat-card.started { background: rgba(76, 175, 80, 0.3); }
+        .stat-card.nashuitong { background: rgba(255, 152, 0, 0.3); }
+        .stat-number { display: block; font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.9; }
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; outline: none; }
+        .search-box input:focus { border-color: #667eea; }
+        .project-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-left: 4px solid #667eea; width: 100%; }
+        .project-card.started { border-left-color: #4CAF50; }
+        .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .project-name { flex: 1; font-size: 1.1rem; color: #2c3e50; margin-right: 10px; }
+        .status-badges { display: flex; gap: 5px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+        .status-badge.started { background: #4CAF50; color: white; }
+        .status-badge.not-started { background: #ff9800; color: white; }
+        .status-badge.nashuitong { background: #2196F3; color: white; }
+        .detail-item { margin-bottom: 8px; display: flex; }
+        .detail-item strong { color: #666; min-width: 80px; }
+        .leader { color: #e74c3c; font-weight: bold; }
+        .unit { color: #3498db; font-weight: bold; }
+        .progress-text { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 5px; border-left: 3px solid #667eea; }
+        .project-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .meta-item { font-size: 0.8rem; color: #666; background: #f8f9fa; padding: 3px 6px; border-radius: 4px; }
+        .last-updated { text-align: center; color: #666; font-size: 0.8rem; margin-top: 10px; }
+        .nav-links { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .nav-link { background: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; color: #333; font-size: 0.9rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .nav-link:hover { background: #667eea; color: white; }
+        @media (max-width: 768px) {
+            .stats { flex-direction: column; gap: 10px; }
+            .project-header { flex-direction: column; align-items: flex-start; }
+            .status-badges { margin-top: 8px; }
+            .detail-item { flex-direction: column; }
+            .detail-item strong { min-width: auto; margin-bottom: 2px; }
+            .nav-links { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部统计信息 -->
+        <div class="header">
+            <h1>📊 项目进度跟踪</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number">7</span>
+                    <span class="stat-label">总项目数</span>
+                </div>
+                <div class="stat-card started">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">已开工</span>
+                </div>
+                <div class="stat-card nashuitong">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">已纳统</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 所有项目</a>
+            <a href="started.html" class="nav-link">✅ 已开工</a>
+            <a href="not-started.html" class="nav-link">⏳ 未开工</a>
+            <a href="search.html" class="nav-link">🔍 搜索项目</a>
+        </div>
+
+        <!-- 页面标题 -->
+        <h2 style="margin-bottom: 15px;">李书涛 分管项目</h2>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索项目名称、分管领导、责任单位..." 
+                   onkeyup="filterProjects()">
+        </div>
+
+        <!-- 项目列表 -->
+        <div class="projects-list" id="projectsList">
+            
+            <div class="project-card " 
+                 data-name="木兰高级中学" 
+                 data-leader="李书涛" 
+                 data-unit="木兰文旅投公司" 
+                 data-progress="10月15日批复可研，文旅投正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰高级中学</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">李书涛</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰文旅投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月15日批复可研，文旅投正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 14000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="社会福利院装修及设备购置" 
+                 data-leader="李书涛" 
+                 data-unit="木兰文旅投公司" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">社会福利院装修及设备购置</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">李书涛</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰文旅投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="融媒体中心发射塔迁建" 
+                 data-leader="李书涛" 
+                 data-unit="区融媒体中心" 
+                 data-progress="正在编制初设（代可研）">
+                <div class="project-header">
+                    <h3 class="project-name">融媒体中心发射塔迁建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">李书涛</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区融媒体中心</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设（代可研）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="武大试验站（黄陂广场南门）停车场" 
+                 data-leader="李书涛" 
+                 data-unit="木兰文旅投公司" 
+                 data-progress="正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">武大试验站（黄陂广场南门）停车场</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">李书涛</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰文旅投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 750万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="木兰山基础设施升级改造" 
+                 data-leader="李书涛" 
+                 data-unit="木兰山风景区服务中心" 
+                 data-progress="正在编制初设（代可研）。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰山基础设施升级改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">李书涛</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰山风景区服务中心</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设（代可研）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 600万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="人民会场修缮工程" 
+                 data-leader="李书涛" 
+                 data-unit="区文旅局" 
+                 data-progress="8月26日批复初设">
+                <div class="project-header">
+                    <h3 class="project-name">人民会场修缮工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">李书涛</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区文旅局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月26日批复初设</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 600万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="木兰山供水管网改造" 
+                 data-leader="李书涛" 
+                 data-unit="木兰山风景区服务中心" 
+                 data-progress="正在编制初设（代可研）。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰山供水管网改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">李书涛</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰山风景区服务中心</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设（代可研）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+
+        <div class="last-updated">
+            最后更新: 2025-11-07 11:23:11
+        </div>
+    </div>
+
+    <script>
+        // 搜索功能
+        function filterProjects() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const projects = document.getElementsByClassName('project-card');
+
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                const name = project.getAttribute('data-name').toLowerCase();
+                const leader = project.getAttribute('data-leader').toLowerCase();
+                const unit = project.getAttribute('data-unit').toLowerCase();
+                const progress = project.getAttribute('data-progress').toLowerCase();
+
+                if (name.includes(filter) || leader.includes(filter) || 
+                    unit.includes(filter) || progress.includes(filter)) {
+                    project.style.display = '';
+                } else {
+                    project.style.display = 'none';
+                }
+            }
+        }
+
+        
+    </script>
+</body>
+</html>

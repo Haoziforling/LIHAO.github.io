@@ -1,0 +1,4041 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>郑威 分管项目 - 项目进度跟踪系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; color: #333; line-height: 1.6; padding: 10px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 15px; }
+        .stats { display: flex; gap: 15px; }
+        .stat-card { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
+        .stat-card.started { background: rgba(76, 175, 80, 0.3); }
+        .stat-card.nashuitong { background: rgba(255, 152, 0, 0.3); }
+        .stat-number { display: block; font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.9; }
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; outline: none; }
+        .search-box input:focus { border-color: #667eea; }
+        .project-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-left: 4px solid #667eea; width: 100%; }
+        .project-card.started { border-left-color: #4CAF50; }
+        .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .project-name { flex: 1; font-size: 1.1rem; color: #2c3e50; margin-right: 10px; }
+        .status-badges { display: flex; gap: 5px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+        .status-badge.started { background: #4CAF50; color: white; }
+        .status-badge.not-started { background: #ff9800; color: white; }
+        .status-badge.nashuitong { background: #2196F3; color: white; }
+        .detail-item { margin-bottom: 8px; display: flex; }
+        .detail-item strong { color: #666; min-width: 80px; }
+        .leader { color: #e74c3c; font-weight: bold; }
+        .unit { color: #3498db; font-weight: bold; }
+        .progress-text { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 5px; border-left: 3px solid #667eea; }
+        .project-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .meta-item { font-size: 0.8rem; color: #666; background: #f8f9fa; padding: 3px 6px; border-radius: 4px; }
+        .last-updated { text-align: center; color: #666; font-size: 0.8rem; margin-top: 10px; }
+        .nav-links { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .nav-link { background: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; color: #333; font-size: 0.9rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .nav-link:hover { background: #667eea; color: white; }
+        @media (max-width: 768px) {
+            .stats { flex-direction: column; gap: 10px; }
+            .project-header { flex-direction: column; align-items: flex-start; }
+            .status-badges { margin-top: 8px; }
+            .detail-item { flex-direction: column; }
+            .detail-item strong { min-width: auto; margin-bottom: 2px; }
+            .nav-links { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部统计信息 -->
+        <div class="header">
+            <h1>📊 项目进度跟踪</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number">89</span>
+                    <span class="stat-label">总项目数</span>
+                </div>
+                <div class="stat-card started">
+                    <span class="stat-number">19</span>
+                    <span class="stat-label">已开工</span>
+                </div>
+                <div class="stat-card nashuitong">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">已纳统</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 所有项目</a>
+            <a href="started.html" class="nav-link">✅ 已开工</a>
+            <a href="not-started.html" class="nav-link">⏳ 未开工</a>
+            <a href="search.html" class="nav-link">🔍 搜索项目</a>
+        </div>
+
+        <!-- 页面标题 -->
+        <h2 style="margin-bottom: 15px;">郑威 分管项目</h2>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索项目名称、分管领导、责任单位..." 
+                   onkeyup="filterProjects()">
+        </div>
+
+        <!-- 项目列表 -->
+        <div class="projects-list" id="projectsList">
+            
+            <div class="project-card started" 
+                 data-name="梅院泥水库灌区现代化建设" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2024年6月28日中标（黄河养护集团有限公司），国债项目，已入库。">
+                <div class="project-header">
+                    <h3 class="project-name">梅院泥水库灌区现代化建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年6月28日中标（黄河养护集团有限公司），国债项目，已入库。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 60700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="盘龙城污水处理厂三期扩建" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月16日批复初设，5月19日中标（武汉市水务建设工程有限公司），已入库。">
+                <div class="project-header">
+                    <h3 class="project-name">盘龙城污水处理厂三期扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月16日批复初设，5月19日中标（武汉市水务建设工程有限公司），已入库。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 41500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="夏家寺灌区续建配套与节水改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="国债项目，2024年12月11日中标（武汉盛科达科技有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">夏家寺灌区续建配套与节水改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">国债项目，2024年12月11日中标（武汉盛科达科技有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 27400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="后湖二泵站新建" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2020年1月18日中标（湖北省汉江水利水电建筑工程有限责任公司）">
+                <div class="project-header">
+                    <h3 class="project-name">后湖二泵站新建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年02月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2020年1月18日中标（湖北省汉江水利水电建筑工程有限责任公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 16800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="省多式联运、玉湖集团、万纬片区外排水连通工程" 
+                 data-leader="郑威" 
+                 data-unit="滠口街" 
+                 data-progress="2024年1月4日批复初设，2023年12月31日中标（武汉市盘龙明达建筑有限公司）">
+                <div class="project-header">
+                    <h3 class="project-name">省多式联运、玉湖集团、万纬片区外排水连通工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年01月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年1月4日批复初设，2023年12月31日中标（武汉市盘龙明达建筑有限公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 9700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="四联垸泵站进水渠扩容整治" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2024年5月15日批复初设，2024年1月17日中标（ 武汉环通建设集团有限责任公司，武汉市市政路桥有限公司 , 武汉市政工程设计研究院有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">四联垸泵站进水渠扩容整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年5月15日批复初设，2024年1月17日中标（ 武汉环通建设集团有限责任公司，武汉市市政路桥有限公司 , 武汉市政工程设计研究院有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="小型水库除险加固工程" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2024年4月16日中标（武汉市黄陂区水利建筑安装工程公司，荆门市水利勘察设计院有限责任公司 , 武汉北永盛建设工程有限公司 , 中工武大设计集团有限公司）。国债项目。">
+                <div class="project-header">
+                    <h3 class="project-name">小型水库除险加固工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年4月16日中标（武汉市黄陂区水利建筑安装工程公司，荆门市水利勘察设计院有限责任公司 , 武汉北永盛建设工程有限公司 , 中工武大设计集团有限公司）。国债项目。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="府河西湖堤（黄花涝）加固续建" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2024年12月31日批复初设，应急项目，施工单位（湖北江能水利水电建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">府河西湖堤（黄花涝）加固续建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年02月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月31日批复初设，应急项目，施工单位（湖北江能水利水电建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="泊沫港河重点山洪沟防洪治理" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="2024年3月29日批复初设，2024年6月17日中标（武汉市黄陂区水利建筑安装工程公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">泊沫港河重点山洪沟防洪治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年3月29日批复初设，2024年6月17日中标（武汉市黄陂区水利建筑安装工程公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1750万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="什仔湖周边村湾污水治理" 
+                 data-leader="郑威" 
+                 data-unit="滠口街" 
+                 data-progress="2024年2月20日批复初设，2025年7月23日已中标（湖北滠晟工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">什仔湖周边村湾污水治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年2月20日批复初设，2025年7月23日已中标（湖北滠晟工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="龙巢小区排水改造" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="5月15日批复初设，7月31日中标（武汉市水务建设工程有限公司，武汉市政工程设计研究院有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">龙巢小区排水改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">5月15日批复初设，7月31日中标（武汉市水务建设工程有限公司，武汉市政工程设计研究院有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="北部地区供水系统集并-泥河水厂供水系统" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="6月26日批复初设，9月2日中标（武汉建工集团工程总承包有限公司，湖北乐宇建设工程有限公司），10月25日报送入库资料至区统计局。">
+                <div class="project-header">
+                    <h3 class="project-name">北部地区供水系统集并-泥河水厂供水系统</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月26日批复初设，9月2日中标（武汉建工集团工程总承包有限公司，湖北乐宇建设工程有限公司），10月25日报送入库资料至区统计局。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 31200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="湖泊蓝藻水华风险防控应急工程" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="施工单位（武汉控股），政府购买服务项目无需走发改审批程序。">
+                <div class="project-header">
+                    <h3 class="project-name">湖泊蓝藻水华风险防控应急工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">施工单位（武汉控股），政府购买服务项目无需走发改审批程序。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="钓场渠湿地生态修复和保护" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="6月30日批复初设，8月15日中标（湖北园道工程建设有限公司，武汉市政工程设计研究院有限责任公司），9月19日报送入库资料至区统计局。">
+                <div class="project-header">
+                    <h3 class="project-name">钓场渠湿地生态修复和保护</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月30日批复初设，8月15日中标（湖北园道工程建设有限公司，武汉市政工程设计研究院有限责任公司），9月19日报送入库资料至区统计局。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1900万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="名流人和小区混错接点改造" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="7月2日批复初设，8月15日中标（武汉市水务建设工程有限公司，武汉市政工程设计研究院有限责任公司），9月19日报送入库资料至区统计局。">
+                <div class="project-header">
+                    <h3 class="project-name">名流人和小区混错接点改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月2日批复初设，8月15日中标（武汉市水务建设工程有限公司，武汉市政工程设计研究院有限责任公司），9月19日报送入库资料至区统计局。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1450万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 10月底已挂表</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="任凯湖3#排口整治" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="7.2日批复初设，政府采购项目，9月28日中标（中标单位是湖北园道工程建设有限公司、武汉市政工程设计研究院有限责任公司（联合体）），已完工，实际投资236万元，未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">任凯湖3#排口整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7.2日批复初设，政府采购项目，9月28日中标（中标单位是湖北园道工程建设有限公司、武汉市政工程设计研究院有限责任公司（联合体）），已完工，实际投资236万元，未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="老县委县政府配电改造" 
+                 data-leader="郑威" 
+                 data-unit="区机关事务服务中心" 
+                 data-progress="9月22日中标（黄陂宏光公司），10月15日签订施工合同，10月23日开工，政府采购项目，未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">老县委县政府配电改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区机关事务服务中心</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月22日中标（黄陂宏光公司），10月15日签订施工合同，10月23日开工，政府采购项目，未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="木兰山祈嗣顶X波段气象雷达供电工程" 
+                 data-leader="郑威" 
+                 data-unit="区气象局" 
+                 data-progress="6月9日中标（湖北粟阳建设工程有限公司），已完工，政府采购项目，未达纳统条件。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰山祈嗣顶X波段气象雷达供电工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区气象局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月9日中标（湖北粟阳建设工程有限公司），已完工，政府采购项目，未达纳统条件。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 120万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="北部地区供水系统集并—梅店水厂供水系统" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">北部地区供水系统集并—梅店水厂供水系统</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 76000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="城市数字公共基础设施" 
+                 data-leader="郑威" 
+                 data-unit="区经创局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">城市数字公共基础设施</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 43000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="前川水厂升级改造和滠水河取水配套完善工程" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">前川水厂升级改造和滠水河取水配套完善工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 31000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="老泵站河区域面源及溢流污染控制" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月24日召开可研评审会，临空投正在修编。">
+                <div class="project-header">
+                    <h3 class="project-name">老泵站河区域面源及溢流污染控制</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月24日召开可研评审会，临空投正在修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 29000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="区污泥处置厂扩建及资源化利用" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="9月8日核准，正在环评和招投标。">
+                <div class="project-header">
+                    <h3 class="project-name">区污泥处置厂扩建及资源化利用</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月8日核准，正在环评和招投标。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 25000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="滠水系统治理工程" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">滠水系统治理工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 21000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="吴家寺水系流域综合治理" 
+                 data-leader="郑威" 
+                 data-unit="蔡榨街" 
+                 data-progress="争取上级资金包装项目">
+                <div class="project-header">
+                    <h3 class="project-name">吴家寺水系流域综合治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">蔡榨街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">争取上级资金包装项目</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 15000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="老旧小区电力改造" 
+                 data-leader="郑威" 
+                 data-unit="区经创局" 
+                 data-progress="3月3日批复可研，8月14日组织评审会并反馈初评意见，正在修编初设，预计11月6日前批复初设。">
+                <div class="project-header">
+                    <h3 class="project-name">老旧小区电力改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">3月3日批复可研，8月14日组织评审会并反馈初评意见，正在修编初设，预计11月6日前批复初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 12000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="奥特莱斯片面源及溢流污染控制" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">奥特莱斯片面源及溢流污染控制</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 11000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="夏家寺水厂扩建（塔耳水厂集并）" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="8月22日可研已评审木兰生态集团正在根据意见修编。正在办理用地手续，按提级巡察要求12月份开工。">
+                <div class="project-header">
+                    <h3 class="project-name">夏家寺水厂扩建（塔耳水厂集并）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月22日可研已评审木兰生态集团正在根据意见修编。正在办理用地手续，按提级巡察要求12月份开工。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 10400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="黄龙漖生态补水人工湿地（一期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">黄龙漖生态补水人工湿地（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 10000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="鲁台变电站到城关110千伏出线穿滠水河床工程" 
+                 data-leader="郑威" 
+                 data-unit="区经创局" 
+                 data-progress="9月9日批复初设，10月22日报送财评资料至区财政局。">
+                <div class="project-header">
+                    <h3 class="project-name">鲁台变电站到城关110千伏出线穿滠水河床工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月9日批复初设，10月22日报送财评资料至区财政局。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="佳海工业园电力隐患整改" 
+                 data-leader="郑威" 
+                 data-unit="区经创局" 
+                 data-progress="市供电公司改造方案10月初确定，我区可研方案预计本周编制完成">
+                <div class="project-header">
+                    <h3 class="project-name">佳海工业园电力隐患整改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">市供电公司改造方案10月初确定，我区可研方案预计本周编制完成</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="黄龙漖片区面源及溢流污染控制工程（一期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">黄龙漖片区面源及溢流污染控制工程（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="新泵站河综合整治工程二期" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月15日区发改局向临空投反馈投资估算审核结果，9月30日临空投公司已完成确认，预计10月底批复可研。">
+                <div class="project-header">
+                    <h3 class="project-name">新泵站河综合整治工程二期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月15日区发改局向临空投反馈投资估算审核结果，9月30日临空投公司已完成确认，预计10月底批复可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="宋岗三220kV变电站土建工程" 
+                 data-leader="郑威" 
+                 data-unit="区经创局" 
+                 data-progress="已于6月12日完成国网审查，9月5日取得可研评审意见，省公司可研报告未审批，待可研报告确定后，我区可编制土建部分可研。">
+                <div class="project-header">
+                    <h3 class="project-name">宋岗三220kV变电站土建工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">已于6月12日完成国网审查，9月5日取得可研评审意见，省公司可研报告未审批，待可研报告确定后，我区可编制土建部分可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="污水干管混接改造及清淤" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="前期管网摸排调查工作未完成（测量、勘探等），临空投提出今年内无法完成可研编制工作。">
+                <div class="project-header">
+                    <h3 class="project-name">污水干管混接改造及清淤</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">前期管网摸排调查工作未完成（测量、勘探等），临空投提出今年内无法完成可研编制工作。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="老泵站河东支渠截污改造" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="9月16日批复可研，木兰生态集团正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">老泵站河东支渠截污改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月16日批复可研，木兰生态集团正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="新前川污水处理厂扩建" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="9月18日召开可研评审会，正在修编。">
+                <div class="project-header">
+                    <h3 class="project-name">新前川污水处理厂扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月18日召开可研评审会，正在修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="乡镇污水管网重大缺陷及混错节点改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="8月25日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">乡镇污水管网重大缺陷及混错节点改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月25日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="35KV泡桐变电站" 
+                 data-leader="郑威" 
+                 data-unit="区经创局" 
+                 data-progress="市供电公司已完成可研评审，综合选址论证已基本完成，待批复后可完成项目核准。核准后我区才能开展可研文本编制">
+                <div class="project-header">
+                    <h3 class="project-name">35KV泡桐变电站</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">市供电公司已完成可研评审，综合选址论证已基本完成，待批复后可完成项目核准。核准后我区才能开展可研文本编制</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="污水干管改造工程（一期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月30日区发改局批复可研，区临空投正在编制初设">
+                <div class="project-header">
+                    <h3 class="project-name">污水干管改造工程（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日区发改局批复可研，区临空投正在编制初设</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="后湖汇水范围农村生活污水治理（二期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="7月1日批复初设，10月24日中标（武汉市青山市政建设集团有限公司,武汉市政工程设计研究院有限责任公司 , 武汉航城生态环境有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">后湖汇水范围农村生活污水治理（二期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月1日批复初设，10月24日中标（武汉市青山市政建设集团有限公司,武汉市政工程设计研究院有限责任公司 , 武汉航城生态环境有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="污水干管新建工程（一期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月30日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">污水干管新建工程（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="老泵站河应急污水处理设施（一期）" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="8月11日批复可研，木兰生态集团正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">老泵站河应急污水处理设施（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月11日批复可研，木兰生态集团正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="泵站改扩建工程" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月12日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">泵站改扩建工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月12日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="航发智慧物流园新建开闭所配套工程" 
+                 data-leader="郑威" 
+                 data-unit="区经创局" 
+                 data-progress="10月22日中标（西安元成建筑工程有限公司，沃达建设集团有限公司，武汉千悦隆建设工程有限公司），10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">航发智慧物流园新建开闭所配套工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月22日中标（西安元成建筑工程有限公司，沃达建设集团有限公司，武汉千悦隆建设工程有限公司），10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="轨道交通基地环天环压110千伏线路入廊" 
+                 data-leader="郑威" 
+                 data-unit="前川街" 
+                 data-progress="街道回复可研文本武汉电力设计院已编制完成，但因费用不足拒不交付">
+                <div class="project-header">
+                    <h3 class="project-name">轨道交通基地环天环压110千伏线路入廊</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">街道回复可研文本武汉电力设计院已编制完成，但因费用不足拒不交付</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="前川中环线供水管道连通及碰接工程" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="9月30日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">前川中环线供水管道连通及碰接工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="横店海航片区供水管道" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="8月29日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">横店海航片区供水管道</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月29日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="污水干管改造工程（二期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">污水干管改造工程（二期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="2025农村黑臭水体治理" 
+                 data-leader="郑威" 
+                 data-unit="区生态环境分局" 
+                 data-progress="/">
+                <div class="project-header">
+                    <h3 class="project-name">2025农村黑臭水体治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区生态环境分局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">/</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 今年我区有16条黑臭水体已纳入中央资金试点范围整治（全市共139条），市级暂无其他资金支持其他黑臭水体项目，该项目暂缓。</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河新市政A地块电力配套" 
+                 data-leader="郑威" 
+                 data-unit="天河街" 
+                 data-progress="6月18日批复初设。10月20日评标，10月27日定标（武汉索德电力工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">天河新市政A地块电力配套</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">天河街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月18日批复初设。10月20日评标，10月27日定标（武汉索德电力工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="北部农村供水整治提升工程" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="10月21日召开可研评审会，正在修编">
+                <div class="project-header">
+                    <h3 class="project-name">北部农村供水整治提升工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月21日召开可研评审会，正在修编</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="前川片区水环境治理优先实施工程" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="10月14日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">前川片区水环境治理优先实施工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月14日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="木兰湖水源地保护区规范化建设" 
+                 data-leader="郑威" 
+                 data-unit="木兰乡" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰湖水源地保护区规范化建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰乡</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="北部水厂水质提升" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">北部水厂水质提升</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="滠水西堤防洪能力提升" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="9月30日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">滠水西堤防洪能力提升</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="后湖流域重点入湖港渠综合整治工程（一期）" 
+                 data-leader="郑威" 
+                 data-unit="横店街" 
+                 data-progress="8月29日批复可研，横店街正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">后湖流域重点入湖港渠综合整治工程（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月29日批复可研，横店街正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="2025年度小型水库除险加固" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="市里审批，9月22日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">2025年度小型水库除险加固</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">市里审批，9月22日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2100万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="后湖泵站110kV变电站增容" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="10月21日初设文本送至评审公司，预计本周五开评审会">
+                <div class="project-header">
+                    <h3 class="project-name">后湖泵站110kV变电站增容</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月21日初设文本送至评审公司，预计本周五开评审会</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="F阳光城东边道路污水管网改造" 
+                 data-leader="郑威" 
+                 data-unit="盘龙城建公司" 
+                 data-progress="9月12日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">F阳光城东边道路污水管网改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城建公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月12日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="后湖流域数字孪生建设（一期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月4日召开可研评审会，临空投正在修编。">
+                <div class="project-header">
+                    <h3 class="project-name">后湖流域数字孪生建设（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月4日召开可研评审会，临空投正在修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="什仔湖、小菜湖、李家大湖三湖联通整治" 
+                 data-leader="郑威" 
+                 data-unit="滠口街" 
+                 data-progress="9月29日召开初设评审会，正在修编">
+                <div class="project-header">
+                    <h3 class="project-name">什仔湖、小菜湖、李家大湖三湖联通整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月29日召开初设评审会，正在修编</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="横店编组站区域污水收集及排口整治" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="水务局申请取消项目">
+                <div class="project-header">
+                    <h3 class="project-name">横店编组站区域污水收集及排口整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">水务局申请取消项目</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 取消项目</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="西河前川老河道水环境治理" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="10月14日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">西河前川老河道水环境治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月14日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1900万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="木兰湖周边农村生活污水治理" 
+                 data-leader="郑威" 
+                 data-unit="木兰乡" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰湖周边农村生活污水治理</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰乡</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1900万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="还建小区用水改造" 
+                 data-leader="郑威" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">还建小区用水改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1850万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="西河桥转压站扩容" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">西河桥转压站扩容</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="木兰湖临湖截污并网改造" 
+                 data-leader="郑威" 
+                 data-unit="木兰乡" 
+                 data-progress="8月1日批复可研，9月26日召开初设评审会，正在修编。">
+                <div class="project-header">
+                    <h3 class="project-name">木兰湖临湖截污并网改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">木兰乡</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月1日批复可研，9月26日召开初设评审会，正在修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="政府后院专用配电室迁移" 
+                 data-leader="郑威" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="已获得高压供电答复单。可研方案已编制完成，10月23日征求区机关事务中心、人防办等相关单位意见">
+                <div class="project-header">
+                    <h3 class="project-name">政府后院专用配电室迁移</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">已获得高压供电答复单。可研方案已编制完成，10月23日征求区机关事务中心、人防办等相关单位意见</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="老旧小区二次供水设施改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">老旧小区二次供水设施改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="后湖沿线排口截污工程（二期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月30日批复可研，临空投正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">后湖沿线排口截污工程（二期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复可研，临空投正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="盘龙城地区供水管网改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="9月26日召开初设（代可研）评审会，10月31日批复初设。">
+                <div class="project-header">
+                    <h3 class="project-name">盘龙城地区供水管网改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月26日召开初设（代可研）评审会，10月31日批复初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河街防汛通道建设" 
+                 data-leader="郑威" 
+                 data-unit="天河街" 
+                 data-progress="9月12日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">天河街防汛通道建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">天河街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月12日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="新武湖水厂升级改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">新武湖水厂升级改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="盘龙城片区易渍水点改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="10月14日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">盘龙城片区易渍水点改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月14日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="前川工业园110kV环油线迁改" 
+                 data-leader="郑威" 
+                 data-unit="前川街" 
+                 data-progress="10月11日召开初设评审会，正在修编初设，预计10月30日前提交文本">
+                <div class="project-header">
+                    <h3 class="project-name">前川工业园110kV环油线迁改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">前川街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月11日召开初设评审会，正在修编初设，预计10月30日前提交文本</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="李家大湖综合整治" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="10月22日召开可研评审会，正在修编。">
+                <div class="project-header">
+                    <h3 class="project-name">李家大湖综合整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月22日召开可研评审会，正在修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="前川及南部地区村级供水管网改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="9月26日召开初设（代可研）评审会，正在修编。">
+                <div class="project-header">
+                    <h3 class="project-name">前川及南部地区村级供水管网改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月26日召开初设（代可研）评审会，正在修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="老泵站河应急污水处理设施（二期）" 
+                 data-leader="郑威" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="正在编制初设（代可研）。">
+                <div class="project-header">
+                    <h3 class="project-name">老泵站河应急污水处理设施（二期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设（代可研）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 900万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="前川城区供水管网改造" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="正在编制初设（代可研）。">
+                <div class="project-header">
+                    <h3 class="project-name">前川城区供水管网改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设（代可研）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 900万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="老泵站河沿岸绿化" 
+                 data-leader="郑威" 
+                 data-unit="滠口街" 
+                 data-progress="9月12日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">老泵站河沿岸绿化</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">滠口街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月12日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="姚家集街四季河整治工程（二期）第二阶段" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="7月10日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">姚家集街四季河整治工程（二期）第二阶段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月10日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="长轩岭街集镇污水管网改造" 
+                 data-leader="郑威" 
+                 data-unit="长轩岭街" 
+                 data-progress="正在编制初设">
+                <div class="project-header">
+                    <h3 class="project-name">长轩岭街集镇污水管网改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">长轩岭街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="朱店垸除险加固" 
+                 data-leader="郑威" 
+                 data-unit="祁家湾街" 
+                 data-progress="正在编制初设（代可研）。">
+                <div class="project-header">
+                    <h3 class="project-name">朱店垸除险加固</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">祁家湾街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设（代可研）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="区管大中型排涝泵站应急抢修" 
+                 data-leader="郑威" 
+                 data-unit="区水务和湖泊局" 
+                 data-progress="9月28日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">区管大中型排涝泵站应急抢修</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区水务和湖泊局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月28日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 550万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="开发区后湖盐船仓堤除险加固" 
+                 data-leader="郑威" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="8月18日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">开发区后湖盐船仓堤除险加固</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月18日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="刘咀垸除险加固" 
+                 data-leader="郑威" 
+                 data-unit="罗汉寺街" 
+                 data-progress="9月23日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">刘咀垸除险加固</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">罗汉寺街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月23日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="后湖北（天湖路）污水处理厂新建（一期）" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月12日批复可研，10月29日组织初设评审会，当天反馈初评意见，临空投正在修编。">
+                <div class="project-header">
+                    <h3 class="project-name">后湖北（天湖路）污水处理厂新建（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月12日批复可研，10月29日组织初设评审会，当天反馈初评意见，临空投正在修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 78300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 合并为“天湖再生水厂及配套管网建设工程”</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="后湖北（天湖路）污水处理厂配套管网新建" 
+                 data-leader="郑威" 
+                 data-unit="临空投公司" 
+                 data-progress="9月12日批复可研，10月29日组织初设评审会，当天反馈初评意见，临空投正在修编。">
+                <div class="project-header">
+                    <h3 class="project-name">后湖北（天湖路）污水处理厂配套管网新建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">郑威</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月12日批复可研，10月29日组织初设评审会，当天反馈初评意见，临空投正在修编。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 9400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 合并为“天湖再生水厂及配套管网建设工程”</span>
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+
+        <div class="last-updated">
+            最后更新: 2025-11-07 11:23:11
+        </div>
+    </div>
+
+    <script>
+        // 搜索功能
+        function filterProjects() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const projects = document.getElementsByClassName('project-card');
+
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                const name = project.getAttribute('data-name').toLowerCase();
+                const leader = project.getAttribute('data-leader').toLowerCase();
+                const unit = project.getAttribute('data-unit').toLowerCase();
+                const progress = project.getAttribute('data-progress').toLowerCase();
+
+                if (name.includes(filter) || leader.includes(filter) || 
+                    unit.includes(filter) || progress.includes(filter)) {
+                    project.style.display = '';
+                } else {
+                    project.style.display = 'none';
+                }
+            }
+        }
+
+        
+    </script>
+</body>
+</html>

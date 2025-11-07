@@ -1,0 +1,3469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彭斌祥 分管项目 - 项目进度跟踪系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; color: #333; line-height: 1.6; padding: 10px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 15px; }
+        .stats { display: flex; gap: 15px; }
+        .stat-card { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
+        .stat-card.started { background: rgba(76, 175, 80, 0.3); }
+        .stat-card.nashuitong { background: rgba(255, 152, 0, 0.3); }
+        .stat-number { display: block; font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.9; }
+        .search-box { margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 25px; font-size: 1rem; outline: none; }
+        .search-box input:focus { border-color: #667eea; }
+        .project-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-left: 4px solid #667eea; width: 100%; }
+        .project-card.started { border-left-color: #4CAF50; }
+        .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .project-name { flex: 1; font-size: 1.1rem; color: #2c3e50; margin-right: 10px; }
+        .status-badges { display: flex; gap: 5px; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+        .status-badge.started { background: #4CAF50; color: white; }
+        .status-badge.not-started { background: #ff9800; color: white; }
+        .status-badge.nashuitong { background: #2196F3; color: white; }
+        .detail-item { margin-bottom: 8px; display: flex; }
+        .detail-item strong { color: #666; min-width: 80px; }
+        .leader { color: #e74c3c; font-weight: bold; }
+        .unit { color: #3498db; font-weight: bold; }
+        .progress-text { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 5px; border-left: 3px solid #667eea; }
+        .project-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .meta-item { font-size: 0.8rem; color: #666; background: #f8f9fa; padding: 3px 6px; border-radius: 4px; }
+        .last-updated { text-align: center; color: #666; font-size: 0.8rem; margin-top: 10px; }
+        .nav-links { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .nav-link { background: white; padding: 8px 15px; border-radius: 20px; text-decoration: none; color: #333; font-size: 0.9rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .nav-link:hover { background: #667eea; color: white; }
+        @media (max-width: 768px) {
+            .stats { flex-direction: column; gap: 10px; }
+            .project-header { flex-direction: column; align-items: flex-start; }
+            .status-badges { margin-top: 8px; }
+            .detail-item { flex-direction: column; }
+            .detail-item strong { min-width: auto; margin-bottom: 2px; }
+            .nav-links { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部统计信息 -->
+        <div class="header">
+            <h1>📊 项目进度跟踪</h1>
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-number">76</span>
+                    <span class="stat-label">总项目数</span>
+                </div>
+                <div class="stat-card started">
+                    <span class="stat-number">24</span>
+                    <span class="stat-label">已开工</span>
+                </div>
+                <div class="stat-card nashuitong">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">已纳统</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">🏠 所有项目</a>
+            <a href="started.html" class="nav-link">✅ 已开工</a>
+            <a href="not-started.html" class="nav-link">⏳ 未开工</a>
+            <a href="search.html" class="nav-link">🔍 搜索项目</a>
+        </div>
+
+        <!-- 页面标题 -->
+        <h2 style="margin-bottom: 15px;">彭斌祥 分管项目</h2>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索项目名称、分管领导、责任单位..." 
+                   onkeyup="filterProjects()">
+        </div>
+
+        <!-- 项目列表 -->
+        <div class="projects-list" id="projectsList">
+            
+            <div class="project-card started" 
+                 data-name="S115孝昌京珠李集互通至黄陂区改扩建" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="7月21日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">S115孝昌京珠李集互通至黄陂区改扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月21日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 105700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="临空大道与机场二通道互通工程（二期）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年2月4日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">临空大道与机场二通道互通工程（二期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年2月4日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 93200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="航城西路跨府河通道黄陂段" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年7月26日中标（武汉市政环境工程建设有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">航城西路跨府河通道黄陂段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年7月26日中标（武汉市政环境工程建设有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 91000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="临空大道与机场二通道互通工程（一期）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年7月26日中标（武汉市盘龙明达建筑有限公司 , 武汉市政工程设计研究院有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">临空大道与机场二通道互通工程（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年7月26日中标（武汉市盘龙明达建筑有限公司 , 武汉市政工程设计研究院有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 57400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="G318黄陂二桥至火塔公路段改扩建" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2023年4月7日中标（武汉环通建设集团有限责任公司）">
+                <div class="project-header">
+                    <h3 class="project-name">G318黄陂二桥至火塔公路段改扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年4月7日中标（武汉环通建设集团有限责任公司）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 37500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="G316黄孝公路沪蓉铁路至武大高速互通段改扩建" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2023年2月10日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">G316黄孝公路沪蓉铁路至武大高速互通段改扩建</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年2月10日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 35300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="府河北路（盘龙三路—岱山桥段）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年5月18日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">府河北路（盘龙三路—岱山桥段）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2022年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年5月18日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 33600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="滨湖路延长线（石道线至武大高速段）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2022年1月13日中标（中交二航局）。">
+                <div class="project-header">
+                    <h3 class="project-name">滨湖路延长线（石道线至武大高速段）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2022年1月13日中标（中交二航局）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 24800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="汉口北物流园万纬园区道排工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2023年7月21日中标（武汉市盘龙明达建筑有限公司，湖北建科国际工程有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北物流园万纬园区道排工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2023年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年7月21日中标（武汉市盘龙明达建筑有限公司，湖北建科国际工程有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="通信线路迁改（含给水管道）" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空管委会" 
+                 data-progress="2024年12月11日中标（中国通信建设第三工程局有限公司，湖北省绿创建筑有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">通信线路迁改（含给水管道）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2024年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月11日中标（中国通信建设第三工程局有限公司，湖北省绿创建筑有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5900万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="生活垃圾中转站改造" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙水投公司" 
+                 data-progress="2023年12月18日中标（武汉环通建设集团有限责任公司，武汉市承远市政工程设计有限公司 , 武汉市市政路桥有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">生活垃圾中转站改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙水投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2023年12月18日中标（武汉环通建设集团有限责任公司，武汉市承远市政工程设计有限公司 , 武汉市市政路桥有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4300万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="S334木兰山至红安李先念故居纪念园旅游公路" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="2024年12月24日中标，因征地费和指标费未缴纳，项目未开工。">
+                <div class="project-header">
+                    <h3 class="project-name">S334木兰山至红安李先念故居纪念园旅游公路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年02月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月24日中标，因征地费和指标费未缴纳，项目未开工。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8700万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="燃气配套设施老化更新升级改造" 
+                 data-leader="彭斌祥" 
+                 data-unit="区城管局" 
+                 data-progress="2024年7月30日批复初设，未争取到国家资金，2024年12月12日中标（华润燃气郑州工程建设有限公司，武汉蓝焰自动化应用技术有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">燃气配套设施老化更新升级改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区城管局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年7月30日批复初设，未争取到国家资金，2024年12月12日中标（华润燃气郑州工程建设有限公司，武汉蓝焰自动化应用技术有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 7800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="森林火灾高风险区综合治理建设项目" 
+                 data-leader="彭斌祥" 
+                 data-unit="区园林和林业局" 
+                 data-progress="2024年12月14日中标（武汉市花木有限公司），9月11日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">森林火灾高风险区综合治理建设项目</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区园林和林业局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月14日中标（武汉市花木有限公司），9月11日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1550万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="庆云街道排工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="9月25日中标（武汉市青山市政建设集团有限公司，武汉市政工程设计研究院有限责任公司 , 武汉市生态园林集团有限公司 , 武汉誉城临空建设工程有限公司），10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">庆云街道排工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月25日中标（武汉市青山市政建设集团有限公司，武汉市政工程设计研究院有限责任公司 , 武汉市生态园林集团有限公司 , 武汉誉城临空建设工程有限公司），10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 37400万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="新十公路汉口北大道至万家咀段市政配套工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="9月3日中标（武汉环通建设集团有限责任公司，北京市政建设集团有限责任公司），已开工，正在报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">新十公路汉口北大道至万家咀段市政配套工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月3日中标（武汉环通建设集团有限责任公司，北京市政建设集团有限责任公司），已开工，正在报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 31200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="市高压燃气管网（含华润燃气管道）迁改及防护" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空管委会" 
+                 data-progress="9月1日定标（中国化学工程第十六建设有限公司），9月26签订施工合同，9月30日进场施工，10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">市高压燃气管网（含华润燃气管道）迁改及防护</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月1日定标（中国化学工程第十六建设有限公司），9月26签订施工合同，9月30日进场施工，10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 9500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="10KV电力线路迁改" 
+                 data-leader="彭斌祥" 
+                 data-unit="区经创局" 
+                 data-progress="7月4日中标（武汉凯源电力科技有限公司），10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">10KV电力线路迁改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月4日中标（武汉凯源电力科技有限公司），10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="华师盘龙城校区场平（清表）" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="盘龙城已开始施工，不作为临空投项目重复实施。">
+                <div class="project-header">
+                    <h3 class="project-name">华师盘龙城校区场平（清表）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">盘龙城已开始施工，不作为临空投项目重复实施。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 场平项目，无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="35KV电力线路迁改" 
+                 data-leader="彭斌祥" 
+                 data-unit="区经创局" 
+                 data-progress="市供电公司内部签订代建协议，9月27日中标（湖北既济电力集团有限公司），10月25日已报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">35KV电力线路迁改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">市供电公司内部签订代建协议，9月27日中标（湖北既济电力集团有限公司），10月25日已报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3500万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="重大项目场平" 
+                 data-leader="彭斌祥" 
+                 data-unit="横店街" 
+                 data-progress="7月9日批复初设，10月24日中标（武汉市黄陂区第五工业建筑有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">重大项目场平</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月9日批复初设，10月24日中标（武汉市黄陂区第五工业建筑有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 场平项目，无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="输油管道迁改及防护" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空管委会" 
+                 data-progress="9月24日中标（中榈工程科技有限公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">输油管道迁改及防护</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月24日中标（中榈工程科技有限公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1100万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="高铁站房扩大规模部分（武汉市承担部分）" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="6月30日，黄陂区、长江沿铁公司、市城投三方出资协议已签订。因对站房规模需重新论证，目前还未有结果，导致初设批复时间无法确定。">
+                <div class="project-header">
+                    <h3 class="project-name">高铁站房扩大规模部分（武汉市承担部分）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月30日，黄陂区、长江沿铁公司、市城投三方出资协议已签订。因对站房规模需重新论证，目前还未有结果，导致初设批复时间无法确定。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 360700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河站市政配套设施" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="控规市资建局已审批完成，正在报市领导签批。">
+                <div class="project-header">
+                    <h3 class="project-name">天河站市政配套设施</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">控规市资建局已审批完成，正在报市领导签批。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 206300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河站集疏运系统" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="控规市资建局已审批完成，正在报市领导签批。">
+                <div class="project-header">
+                    <h3 class="project-name">天河站集疏运系统</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">控规市资建局已审批完成，正在报市领导签批。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 171700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="精工项目区域基础公共设施" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">精工项目区域基础公共设施</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 55000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="腾龙大道" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="9月30日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">腾龙大道</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 54000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="云湖路" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="可研文本已报送区发改局，10月17日送函审，10月24日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">云湖路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">可研文本已报送区发改局，10月17日送函审，10月24日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 35000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天新一路" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="9月30日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">天新一路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 32500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="滨湖路延长线与汉口北大道连接线工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">滨湖路延长线与汉口北大道连接线工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 25000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="华云街道排工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="2024年7月1日批复可研，因机场高速改扩建暂未编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">华云街道排工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年7月1日批复可研，因机场高速改扩建暂未编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 23000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="腾飞路北段" 
+                 data-leader="彭斌祥" 
+                 data-unit="横店街" 
+                 data-progress="10月22日批复初设，正在编制施工图。">
+                <div class="project-header">
+                    <h3 class="project-name">腾飞路北段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月22日批复初设，正在编制施工图。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 22500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="S18机场高速辅路" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="正在编制项目建议书。">
+                <div class="project-header">
+                    <h3 class="project-name">S18机场高速辅路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制项目建议书。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 20000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="西气东输淮武线迁改" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空管委会" 
+                 data-progress="9月3日批复可研，初设正在编制">
+                <div class="project-header">
+                    <h3 class="project-name">西气东输淮武线迁改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月3日批复可研，初设正在编制</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 18000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="钓台道（一期）" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="6月17日批复项目建议书，正在编制可研和选址意见书。">
+                <div class="project-header">
+                    <h3 class="project-name">钓台道（一期）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月17日批复项目建议书，正在编制可研和选址意见书。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 16000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="汉口北北二路" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="5月29日批复项目建议书，正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北北二路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">5月29日批复项目建议书，正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 14300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="站东二路" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="控规市资建局已审批完成，正在报市领导签批。">
+                <div class="project-header">
+                    <h3 class="project-name">站东二路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">控规市资建局已审批完成，正在报市领导签批。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 14000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="220KV、110KV电力线路迁改" 
+                 data-leader="彭斌祥" 
+                 data-unit="区经创局" 
+                 data-progress="正在可研修编，区发改局预计10月30日前批复可研。">
+                <div class="project-header">
+                    <h3 class="project-name">220KV、110KV电力线路迁改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在可研修编，区发改局预计10月30日前批复可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 12200万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="汉口北北一路" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="5月22日批复项目建议书，正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北北一路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">5月22日批复项目建议书，正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 11000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="2025年农村公路建设" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="正在编制可研">
+                <div class="project-header">
+                    <h3 class="project-name">2025年农村公路建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 8300万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="站西路" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="控规市资建局已审批完成，正在报市领导签批。">
+                <div class="project-header">
+                    <h3 class="project-name">站西路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">控规市资建局已审批完成，正在报市领导签批。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 7400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="站东一路" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="控规市资建局已审批完成，正在报市领导签批。">
+                <div class="project-header">
+                    <h3 class="project-name">站东一路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">控规市资建局已审批完成，正在报市领导签批。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 7400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="创业小路南段" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="临空投对工程实施意愿不强。">
+                <div class="project-header">
+                    <h3 class="project-name">创业小路南段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">临空投对工程实施意愿不强。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 7100万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="刘古塘路（虹云街-7号路）" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="2024年12月20日批复初设。刘古塘路辅道部分受机场高速改扩建影响，正协调优化道路设计方案">
+                <div class="project-header">
+                    <h3 class="project-name">刘古塘路（虹云街-7号路）</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">2024年12月20日批复初设。刘古塘路辅道部分受机场高速改扩建影响，正协调优化道路设计方案</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 7000万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="汉口北招商路" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="9月4日批复可研，初设编制中。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北招商路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年12月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月4日批复可研，初设编制中。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="站东路" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="控规市资建局已审批完成，正在报市领导签批。">
+                <div class="project-header">
+                    <h3 class="project-name">站东路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">控规市资建局已审批完成，正在报市领导签批。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="2025年县道大中修工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="8月29日工程可行性研究报告审核结论已确认，等发改局下达该项目的工可批复">
+                <div class="project-header">
+                    <h3 class="project-name">2025年县道大中修工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月29日工程可行性研究报告审核结论已确认，等发改局下达该项目的工可批复</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 6500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天翔路" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="临空投对工程实施意愿不强。">
+                <div class="project-header">
+                    <h3 class="project-name">天翔路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">临空投对工程实施意愿不强。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5600万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="武大高速长岭互通连接线" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">武大高速长岭互通连接线</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 5000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天新六路" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="临空投对工程实施意愿不强，项目建设单位暂未确定。">
+                <div class="project-header">
+                    <h3 class="project-name">天新六路</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年11月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">临空投对工程实施意愿不强，项目建设单位暂未确定。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河新市镇通信机楼和邮政支局" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">天河新市镇通信机楼和邮政支局</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="“四线一口”环境综合整治" 
+                 data-leader="彭斌祥" 
+                 data-unit="区城管局" 
+                 data-progress="7月24日批复可研，区城管局正在修编初设。">
+                <div class="project-header">
+                    <h3 class="project-name">“四线一口”环境综合整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区城管局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月24日批复可研，区城管局正在修编初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 4000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="S234韩集至长岭岗段" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="5月30日中标（武汉环通建设集团有限责任公司）。">
+                <div class="project-header">
+                    <h3 class="project-name">S234韩集至长岭岗段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">5月30日中标（武汉环通建设集团有限责任公司）。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 9600万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河新市镇供水站" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="正在编制可研">
+                <div class="project-header">
+                    <h3 class="project-name">天河新市镇供水站</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="创业路提档升级" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="临空投对工程实施意愿不强。">
+                <div class="project-header">
+                    <h3 class="project-name">创业路提档升级</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">临空投对工程实施意愿不强。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 3000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="园区电力配套" 
+                 data-leader="彭斌祥" 
+                 data-unit="横店街" 
+                 data-progress="上周勘探现场，正在修订初设，预计10月30日提交文本">
+                <div class="project-header">
+                    <h3 class="project-name">园区电力配套</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">上周勘探现场，正在修订初设，预计10月30日提交文本</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="姚集垃圾中转站" 
+                 data-leader="彭斌祥" 
+                 data-unit="姚家集街" 
+                 data-progress="9月26日批复可研，正在编制初设">
+                <div class="project-header">
+                    <h3 class="project-name">姚集垃圾中转站</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">姚家集街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月26日批复可研，正在编制初设</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="普洛斯3号路南段一期" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="临空投对工程实施意愿不强。">
+                <div class="project-header">
+                    <h3 class="project-name">普洛斯3号路南段一期</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">临空投对工程实施意愿不强。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2100万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天河新市镇污水提升泵站" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙交投公司" 
+                 data-progress="污水排放功能已由天新一路取代，项目暂无实施必要性。">
+                <div class="project-header">
+                    <h3 class="project-name">天河新市镇污水提升泵站</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙交投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年08月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">污水排放功能已由天新一路取代，项目暂无实施必要性。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="刘店立交周边区域景观照明设施品质提升" 
+                 data-leader="彭斌祥" 
+                 data-unit="区城管局" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">刘店立交周边区域景观照明设施品质提升</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区城管局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2000万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="环湖路中段" 
+                 data-leader="彭斌祥" 
+                 data-unit="横店街" 
+                 data-progress="6月7日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">环湖路中段</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">6月7日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1800万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="110KV香压线迁改" 
+                 data-leader="彭斌祥" 
+                 data-unit="区经创局" 
+                 data-progress="9月30日批复初设，预计11月15日前完成财评。">
+                <div class="project-header">
+                    <h3 class="project-name">110KV香压线迁改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区经创局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复初设，预计11月15日前完成财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1800万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card started" 
+                 data-name="汉口北大道10kv电力线路迁改入地工程电气部分" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">汉口北大道10kv电力线路迁改入地工程电气部分</h3>
+                    <div class="status-badges">
+                        <span class="status-badge started">
+                            已开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1780万元</span>
+                        <span class="meta-item">🏷️ 续建</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="2025年度口袋公园建设" 
+                 data-leader="彭斌祥" 
+                 data-unit="区园林和林业局" 
+                 data-progress="9月12日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">2025年度口袋公园建设</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区园林和林业局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年10月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月12日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="临空产业园环境综合整治" 
+                 data-leader="彭斌祥" 
+                 data-unit="横店街" 
+                 data-progress="初设已评审，预计10月30日前批复">
+                <div class="project-header">
+                    <h3 class="project-name">临空产业园环境综合整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">横店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">初设已评审，预计10月30日前批复</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1600万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="H5地块配套景观绿化" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="7月14日批复可研，6月27日初设评审，临空投正在调整选址意见书。">
+                <div class="project-header">
+                    <h3 class="project-name">H5地块配套景观绿化</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月14日批复可研，6月27日初设评审，临空投正在调整选址意见书。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="蔡店街垃圾中转站" 
+                 data-leader="彭斌祥" 
+                 data-unit="蔡店街" 
+                 data-progress="正在编制可研。">
+                <div class="project-header">
+                    <h3 class="project-name">蔡店街垃圾中转站</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">蔡店街</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制可研。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1500万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="许庙、三店还建小区环境整治" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="9月22日批复许庙初设，正在财评；10月14日批复三店初设，10月24日报送财评资料至区财政局。">
+                <div class="project-header">
+                    <h3 class="project-name">许庙、三店还建小区环境整治</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年09月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月22日批复许庙初设，正在财评；10月14日批复三店初设，10月24日报送财评资料至区财政局。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 1200万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        <span class="meta-item">📝 无法纳统</span>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="天纵城六医院周边道路改造" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="8月6日批复初设，9月17日批复财评，10月29日发布招标公告，11月10日定标，预计11月中旬开工，11月底报送入库资料。">
+                <div class="project-header">
+                    <h3 class="project-name">天纵城六医院周边道路改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月6日批复初设，9月17日批复财评，10月29日发布招标公告，11月10日定标，预计11月中旬开工，11月底报送入库资料。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="盘龙一中横路改造及金川水岸道路杆线迁移" 
+                 data-leader="彭斌祥" 
+                 data-unit="盘龙城管委会" 
+                 data-progress="8月12日批复初设，10月31日采购意向公告结束，11月初挂网招标。">
+                <div class="project-header">
+                    <h3 class="project-name">盘龙一中横路改造及金川水岸道路杆线迁移</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">盘龙城管委会</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">8月12日批复初设，10月31日采购意向公告结束，11月初挂网招标。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 700万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="G318后湖大桥结构健康监测系统" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="9月8日批复初设，区交通局正在编制施工图。">
+                <div class="project-header">
+                    <h3 class="project-name">G318后湖大桥结构健康监测系统</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月8日批复初设，区交通局正在编制施工图。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 600万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="冯民路南二路道路应急维修" 
+                 data-leader="彭斌祥" 
+                 data-unit="区城管局" 
+                 data-progress="9月30日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">冯民路南二路道路应急维修</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区城管局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">9月30日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 450万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="华中师大供水工程" 
+                 data-leader="彭斌祥" 
+                 data-unit="临空投公司" 
+                 data-progress="正在编制初设（代可研）">
+                <div class="project-header">
+                    <h3 class="project-name">华中师大供水工程</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">临空投公司</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年06月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在编制初设（代可研）</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 400万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="环卫城镇公厕" 
+                 data-leader="彭斌祥" 
+                 data-unit="区城管局" 
+                 data-progress="正在修编初设，预计10月30日前报区发改局批复。">
+                <div class="project-header">
+                    <h3 class="project-name">环卫城镇公厕</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区城管局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年07月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">正在修编初设，预计10月30日前报区发改局批复。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 250万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="三店村陈家岗第7号建筑垃圾堆存点整改" 
+                 data-leader="彭斌祥" 
+                 data-unit="区城管局" 
+                 data-progress="7月9日批复初设，正在财评。">
+                <div class="project-header">
+                    <h3 class="project-name">三店村陈家岗第7号建筑垃圾堆存点整改</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区城管局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年04月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">7月9日批复初设，正在财评。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 550万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+            <div class="project-card " 
+                 data-name="2025年普通国省道路面改造" 
+                 data-leader="彭斌祥" 
+                 data-unit="区交通运输局" 
+                 data-progress="10月14日批复可研，正在编制初设。">
+                <div class="project-header">
+                    <h3 class="project-name">2025年普通国省道路面改造</h3>
+                    <div class="status-badges">
+                        <span class="status-badge ">
+                            未开工
+                        </span>
+                        
+                    </div>
+                </div>
+
+                <div class="project-details">
+                    <div class="detail-item">
+                        <strong>分管领导:</strong>
+                        <span class="leader">彭斌祥</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>责任单位:</strong>
+                        <span class="unit">区交通运输局</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>预计开工:</strong>
+                        <span>2025年05月</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <strong>项目进展:</strong>
+                        <div class="progress-text">10月14日批复可研，正在编制初设。</div>
+                    </div>
+
+                    <div class="project-meta">
+                        <span class="meta-item">💰 2900万元</span>
+                        <span class="meta-item">🏷️ 新开工</span>
+        
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+
+        <div class="last-updated">
+            最后更新: 2025-11-07 11:23:11
+        </div>
+    </div>
+
+    <script>
+        // 搜索功能
+        function filterProjects() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const projects = document.getElementsByClassName('project-card');
+
+            for (let i = 0; i < projects.length; i++) {
+                const project = projects[i];
+                const name = project.getAttribute('data-name').toLowerCase();
+                const leader = project.getAttribute('data-leader').toLowerCase();
+                const unit = project.getAttribute('data-unit').toLowerCase();
+                const progress = project.getAttribute('data-progress').toLowerCase();
+
+                if (name.includes(filter) || leader.includes(filter) || 
+                    unit.includes(filter) || progress.includes(filter)) {
+                    project.style.display = '';
+                } else {
+                    project.style.display = 'none';
+                }
+            }
+        }
+
+        
+    </script>
+</body>
+</html>
